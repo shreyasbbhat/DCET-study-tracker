@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCET 2026 Study Tracker</title>
+    
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Load Babel for JSX translation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONS ---
+        const TargetIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+        const ZapIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+        const ClockIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+        const CalendarIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+        const CheckCircleIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+        const CheckSquareIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>;
+        const BookOpenIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+        const AlertCircleIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+        const XIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+        const CheckIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+        const XCircleIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>;
+        const ChevronRightIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+
+        // --- TIMETABLE DATA ---
+        const CS_STRATEGY = [
+            { level: 'Native', label: 'Very Easy', subjects: 'IT Skills (All) & Stats U4', color: 'bg-green-100 text-green-800 border-green-200' },
+            { level: 'Moderate', label: 'Formula/Theory', subjects: 'Stats (U1-3) & PMS (All)', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+            { level: 'Hard', label: 'Practice Heavy', subjects: 'Engg Math (Calc/Trigo)', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+            { level: 'Unfamiliar', label: 'Bottleneck', subjects: 'FEEE (U1-U4)', color: 'bg-red-100 text-red-800 border-red-200' }
+        ];
+
+        const ROUTINES = [
+            { time: 'Morning', duration: '1.5h - 2.5h', weekday: '06:00 AM: Heavy Focus (Math/FEEE)', weekend: '08:00 AM: Heavy 1 (Math/FEEE)' },
+            { time: 'Afternoon', duration: '2.0h', weekday: 'N/A (Work hours)', weekend: '01:00 PM: Heavy 2 (Stats/Trigo)' },
+            { time: 'Evening 1', duration: '1.5h - 2.0h', weekday: '07:00 PM: Theory (PMS/IT/Stats)', weekend: '04:30 PM: Light Theory / Mocks' },
+            { time: 'Evening 2', duration: '1.0h - 1.5h', weekday: '09:00 PM: MCQ Practice', weekend: '08:00 PM: Sunday Catch-up Buffer' },
+        ];
+
+        const PHASES = [
+            {
+                id: 'phase1',
+                title: 'Phase 1: The First Pass',
+                dates: 'Apr 20 - May 4',
+                days: [
+                    { day: 1, date: 'Mon, Apr 20', tasks: ['Math U1 (Matrices)', 'IT U1 (Coding Basics)', 'Evening MCQs'] },
+                    { day: 2, date: 'Tue, Apr 21', tasks: ['FEEE U1 (Safety/Earthing)', 'Math U1 (Eigenvalues)', 'Evening MCQs'] },
+                    { day: 3, date: 'Wed, Apr 22', tasks: ['Stats U1 (Data Collection)', 'PMS U1 (Intro/Role)', 'Evening MCQs'] },
+                    { day: 4, date: 'Thu, Apr 23', tasks: ['Math U2 (Straight Lines)', 'IT U2 (HTML/JS)', 'Evening MCQs'] },
+                    { day: 5, date: 'Fri, Apr 24', tasks: ["FEEE U2 (Ohm's Law, AC/DC)", 'Stats U2 (Tables/Charts)', 'Evening MCQs'] },
+                    { day: 6, date: 'Sat, Apr 25', tasks: ['Math U3 (Allied Angles)', 'FEEE U2 (Measuring)', 'PMS U2 (Team/WBS)'] },
+                    { day: 7, date: 'Sun, Apr 26', tasks: ['FEEE U3 (MCB/Wiring)', 'Math U3 (Compound)', 'Stats U2 (Histograms)'] },
+                    { day: 8, date: 'Mon, Apr 27', tasks: ['Math U4 (Diff Calc Basics)', 'IT U3 (BPA/ERP)', 'Evening MCQs'] },
+                    { day: 9, date: 'Tue, Apr 28', tasks: ['FEEE U3 (Relays/Protection)', 'Stats U3 (Mean/Mode)', 'Evening MCQs'] },
+                    { day: 10, date: 'Wed, Apr 29', tasks: ['Math U4 (Diff Calc Apps)', 'PMS U3 (Life Cycle)', 'Evening MCQs'] },
+                    { day: 11, date: 'Thu, Apr 30', tasks: ['FEEE U4 (Transformers)', 'IT U4 (Cloud/IoT)', 'Evening MCQs'] },
+                    { day: 12, date: 'Fri, May 1', tasks: ['Math U5 (Integral Calc)', 'Stats U3 (Range/Std Dev)', 'Evening MCQs'] },
+                    { day: 13, date: 'Sat, May 2', tasks: ['FEEE U4 (Motors/Batteries)', 'Math U5 (Def. Integrals)', 'PMS U4 (Planning)'] },
+                    { day: 14, date: 'Sun, May 3', tasks: ['PMS U5 (Control/Gantt)', 'IT U5 (Cyber Security)', 'Sunday Catch-up'] },
+                    { day: 15, date: 'Mon, May 4', tasks: ['FEEE U5 (Digital Electronics)', 'Stats U4 (Python)', 'Evening MCQs'] }
+                ]
+            },
+            {
+                id: 'phase2',
+                title: 'Phase 2: Consolidation',
+                dates: 'May 5 - May 15',
+                days: [
+                    { day: 16, date: 'Tue, May 5', tasks: ['FEEE (Rev U1 & U2)', 'Math (Rev U1 & U2)', '20+ MCQs'] },
+                    { day: 17, date: 'Wed, May 6', tasks: ['Stats (Rev U1, U2, U4)', 'PMS (Rev U1 & U2)', '20+ MCQs'] },
+                    { day: 18, date: 'Thu, May 7', tasks: ['Math (U3 Trigo Intense)', 'IT (Rev all 5 Units)', '40+ MCQs'] },
+                    { day: 19, date: 'Fri, May 8', tasks: ['FEEE (Rev U3 & U4)', 'PMS (Rev U3 & U4)', '20+ MCQs'] },
+                    { day: 20, date: 'Sat, May 9', tasks: ['Math (U4 Calc Intense)', 'Review FEEE Mistakes', '📝 FEEE Sectional (50Qs)'] },
+                    { day: 21, date: 'Sun, May 10', tasks: ['Math (U5 Int. Intense)', 'Sunday Catch-up', '📝 Math Sectional (50Qs)'] },
+                    { day: 22, date: 'Mon, May 11', tasks: ['Stats (U3 Variance)', 'PMS (Rev U5 CPM)', '20+ MCQs'] },
+                    { day: 23, date: 'Tue, May 12', tasks: ['FEEE (Rev U5 Electronics)', 'Rest / Free Time', '40+ MCQs'] },
+                    { day: 24, date: 'Wed, May 13', tasks: ['Review Test Mistakes', 'FEEE Weak Concepts', '📝 FEEE Sectional 2'] },
+                    { day: 25, date: 'Thu, May 14', tasks: ['Review Test Mistakes', 'Stats/PMS Weak Concepts', '📝 Stats+PMS Sectional'] },
+                    { day: 26, date: 'Fri, May 15', tasks: ['Memorize Formulas', 'Create Cheat Sheet', 'Print OMR sheets'] }
+                ]
+            },
+            {
+                id: 'phase3',
+                title: 'Phase 3: Revision Week',
+                dates: 'May 16 - May 23',
+                days: [
+                    { day: 27, date: 'Sat, May 16', tasks: ['🏆 Full Mock Test 1', 'Map errors (A/B/C)', 'Micro-drills'] },
+                    { day: 28, date: 'Sun, May 17', tasks: ['📄 PYQ Paper 1', 'Analyze DCET traps', 'Review cheat sheet'] },
+                    { day: 29, date: 'Mon, May 18', tasks: ['🏆 Full Mock Test 2', 'Finish 15 mins early', 'Guessing strategy practice'] },
+                    { day: 30, date: 'Tue, May 19', tasks: ['📄 PYQ Paper 2', 'Reverse engineering', 'Plug options backward'] },
+                    { day: 31, date: 'Wed, May 20', tasks: ['🏆 Full Mock Test 3', 'Accuracy focus', 'Skip blind questions'] },
+                    { day: 32, date: 'Thu, May 21', tasks: ['🔨 Weakness Purge', 'Find 3 worst topics', '4.5 hrs of targeted MCQs'] },
+                    { day: 33, date: 'Fri, May 22', tasks: ['👁️ Visual Scan Day', 'Pack bag (ID/Pens)', 'Sleep 8+ hours'] },
+                    { day: 34, date: 'Sat, May 23', tasks: ['🚀 EXAM DAY: Crush the DCET!'] }
+                ]
+            }
+        ];
+
+        const QUIZ_DATABASE = {
+            'phase1-d1': {
+                title: 'Day 1: Math (Matrices) & IT (Coding)',
+                questions: [
+                    { id: 1, text: 'What is the determinant of the matrix A = [[4, 2], [1, 3]]?', options: ['10', '14', '12', '8'], correctAnswer: 0, explanation: 'Det(A) = (4 × 3) - (2 × 1) = 12 - 2 = 10.' },
+                    { id: 2, text: 'For two matrices A and B to be multiplied (A × B), which condition must be true?', options: ['Both matrices must have the exact same dimensions.', 'The number of rows in A must equal the number of rows in B.', 'The number of columns in A must equal the number of rows in B.', 'Both matrices must be square matrices.'], correctAnswer: 2, explanation: 'Matrix multiplication rule: Columns of 1st matrix = Rows of 2nd matrix.' },
+                    { id: 3, text: 'According to Cramer\'s rule, what does Δ (Delta) represent?', options: ['The determinant of the constant terms.', 'The identity matrix.', 'The determinant of the coefficient matrix.', 'The inverse of the matrix.'], correctAnswer: 2, explanation: 'Δ is calculated using only the coefficients of the variables x, y, and z.' },
+                    { id: 4, text: 'If the determinant of a square matrix is zero, the matrix is called a:', options: ['Identity Matrix', 'Singular Matrix', 'Non-Singular Matrix', 'Null Matrix'], correctAnswer: 1, explanation: 'A matrix with a determinant of 0 is singular and does not have an inverse.' },
+                    { id: 5, text: 'If A is a non-singular matrix, then A × A⁻¹ is equal to:', options: ['Null Matrix (0)', 'Identity Matrix (I)', 'Matrix A itself', 'A²'], correctAnswer: 1, explanation: 'Multiplying a matrix by its inverse always results in the Identity matrix (I).' },
+                    { id: 6, text: 'The transpose of a column matrix is a:', options: ['Row matrix', 'Null matrix', 'Diagonal matrix', 'Identity matrix'], correctAnswer: 0, explanation: 'Transposing changes columns into rows, so a column matrix becomes a row matrix.' },
+                    { id: 7, text: 'If (A^T)^T represents the transpose of a transposed matrix, what is it equal to?', options: ['A⁻¹', 'I', 'A', '-A'], correctAnswer: 2, explanation: 'Transposing a matrix twice returns it to its original state.' },
+                    { id: 8, text: 'To find the adjoint of a 2x2 matrix, you must:', options: ['Multiply all elements by -1', 'Swap the principal diagonal elements and change the signs of the other two', 'Divide all elements by the determinant', 'Swap the rows and columns'], correctAnswer: 1, explanation: 'Shortcut for 2x2 adjoint: Swap top-left with bottom-right, and multiply top-right and bottom-left by -1.' },
+                    { id: 9, text: 'What is the determinant of a 3x3 Identity matrix (I)?', options: ['0', '3', '1', '9'], correctAnswer: 2, explanation: 'The determinant of any Identity matrix, regardless of size, is always 1.' },
+                    { id: 10, text: 'If A and B are symmetric matrices, then (A + B) is:', options: ['Skew-symmetric', 'Symmetric', 'Null', 'Identity'], correctAnswer: 1, explanation: 'The sum of two symmetric matrices is always a symmetric matrix.' },
+                    { id: 11, text: 'In a standard flowchart, what does a Diamond (◇) symbol represent?', options: ['Start / Stop', 'Input / Output', 'Processing', 'Decision making (Yes/No)'], correctAnswer: 3, explanation: 'A diamond is used when the code has an IF/ELSE condition.' },
+                    { id: 12, text: 'Which of the following is the best definition of an "Algorithm"?', options: ['A graphical representation of logic', 'A step-by-step mathematical or logical procedure to solve a problem', 'A programming language', 'A hardware component'], correctAnswer: 1, explanation: 'An algorithm is the logical sequence of steps written in plain text.' },
+                    { id: 13, text: 'In basic Android App Development, which file type is predominantly used to design the visual UI layout?', options: ['.java', '.py', '.xml', '.mp4'], correctAnswer: 2, explanation: 'Android uses XML (eXtensible Markup Language) to define layouts, buttons, and text views.' },
+                    { id: 14, text: 'In a flowchart, which symbol is traditionally used to represent an Input or Output operation?', options: ['Rectangle', 'Parallelogram', 'Oval', 'Hexagon'], correctAnswer: 1, explanation: 'Parallelograms are strictly used to show data entering (Input) or leaving (Output) the system.' },
+                    { id: 15, text: 'Which symbol is used to indicate the Start or End of a flowchart?', options: ['Rectangle', 'Diamond', 'Oval (Terminal)', 'Arrow'], correctAnswer: 2, explanation: 'Ovals or rounded rectangles are used as terminal symbols for Start and Stop.' },
+                    { id: 16, text: 'What does IDE stand for in coding?', options: ['Internal Data Execution', 'Integrated Development Environment', 'Interactive Design Element', 'Internet Development Engine'], correctAnswer: 1, explanation: 'An IDE (like VS Code or Android Studio) provides tools to write, test, and debug code.' },
+                    { id: 17, text: 'What software translates high-level programming language into machine code?', options: ['Compiler', 'Operating System', 'Browser', 'Database'], correctAnswer: 0, explanation: 'Compilers and Interpreters translate human-readable code into 0s and 1s.' },
+                    { id: 18, text: 'A "bug" in programming refers to:', options: ['A virus', 'An error or flaw in the code', 'A feature', 'A hardware failure'], correctAnswer: 1, explanation: 'A bug is a logical or syntax error that causes a program to crash or behave unexpectedly.' },
+                    { id: 19, text: 'What is the standard shape for a "Process" or "Calculation" step in a flowchart?', options: ['Rectangle', 'Circle', 'Triangle', 'Diamond'], correctAnswer: 0, explanation: 'Rectangles represent actions, calculations, or variable assignments.' },
+                    { id: 20, text: 'What is the very first step in solving a programming problem?', options: ['Writing the code', 'Testing', 'Understanding and defining the problem', 'Drawing a flowchart'], correctAnswer: 2, explanation: 'Before algorithms or code, you must clearly define what problem you are solving.' }
+                ]
+            },
+            'phase1-d2': {
+                title: 'Day 2: FEEE (Safety) & Math (Eigenvalues)',
+                questions: [
+                    { id: 1, text: 'What is the primary purpose of Earthing in an electrical installation?', options: ['To save electricity', 'To protect human life from electric shock', 'To increase the voltage', 'To convert AC to DC'], correctAnswer: 1, explanation: 'Earthing provides a safe, low-resistance path for leakage current, protecting users.' },
+                    { id: 2, text: 'What does PPE stand for in electrical safety?', options: ['Personal Protective Equipment', 'Primary Power Engine', 'Phase Protection Element', 'Power Plant Engineering'], correctAnswer: 0, explanation: 'PPE includes safety gloves, helmets, and insulated shoes.' },
+                    { id: 3, text: 'What should be the very first step if you see a person getting electrocuted?', options: ['Pull them away with bare hands', 'Pour water on them', 'Turn off the main power supply', 'Call an ambulance immediately'], correctAnswer: 2, explanation: 'Always turn off the power source first. Touching the victim directly can electrocute you.' },
+                    { id: 4, text: 'Which color wire is universally used to represent the Earth connection in standard AC wiring?', options: ['Red', 'Black', 'Green or Green/Yellow', 'Blue'], correctAnswer: 2, explanation: 'Green or Green with a Yellow stripe is the standard color code for earthing wires.' },
+                    { id: 5, text: 'In Plate Earthing, the earth electrode is typically made of which material?', options: ['Aluminum', 'Copper or Galvanized Iron (GI)', 'Plastic', 'Lead'], correctAnswer: 1, explanation: 'Copper and GI are highly conductive and resist underground corrosion.' },
+                    { id: 6, text: 'What happens to the earth resistance if we add salt and charcoal powder to the earthing pit?', options: ['It increases', 'It decreases', 'It remains the same', 'It fluctuates'], correctAnswer: 1, explanation: 'Salt and charcoal retain moisture and increase soil conductivity, lowering resistance.' },
+                    { id: 7, text: 'Which class of fire extinguisher should be used on electrical fires?', options: ['Class A (Water)', 'Class C (Dry Chemical/CO2)', 'Class D (Metals)', 'Class K (Oils)'], correctAnswer: 1, explanation: 'Never use water! Class C extinguishers (CO2 or Dry Chemical) are non-conductive.' },
+                    { id: 8, text: 'What is the standard frequency of the AC power supply in India?', options: ['60 Hz', '120 Hz', '50 Hz', '240 Hz'], correctAnswer: 2, explanation: 'The standard AC frequency in India is 50 Hz.' },
+                    { id: 9, text: 'In an electrical context, what does a "Fuse" do?', options: ['Stores energy', 'Protects circuit by melting on excess current', 'Converts AC to DC', 'Increases current'], correctAnswer: 1, explanation: 'A fuse is a sacrificial device that breaks the circuit to prevent fire during overload.' },
+                    { id: 10, text: 'What is the best immediate artificial respiration method for an electrocution victim?', options: ['CPR (Mouth-to-Mouth)', 'Giving them water', 'Slapping their face', 'Making them sit up'], correctAnswer: 0, explanation: 'CPR must be started immediately to maintain blood flow and oxygen.' },
+                    { id: 11, text: 'The characteristic equation of a square matrix A is given by which formula?', options: ['|A + λI| = 0', '|A - λI| = 0', 'A = λI', '|A| = λ'], correctAnswer: 1, explanation: 'Subtract λ from the diagonal elements and equate the determinant to zero: |A - λI| = 0.' },
+                    { id: 12, text: 'The sum of the eigenvalues of a matrix is equal to:', options: ['The determinant', 'Zero', 'The trace of the matrix', 'Product of diagonal elements'], correctAnswer: 2, explanation: 'Fundamental property: Sum of eigenvalues = Trace of the matrix (sum of main diagonal).' },
+                    { id: 13, text: 'The product of the eigenvalues of a matrix A is equal to:', options: ['The trace', 'The determinant of matrix A', '1', 'Zero'], correctAnswer: 1, explanation: 'Fundamental property: Product of eigenvalues = Determinant of the matrix (|A|).' },
+                    { id: 14, text: 'If a matrix A has an eigenvalue λ = 0, what does this tell us?', options: ['Identity matrix', 'Singular matrix (Det = 0)', 'Inverse matrix', 'Symmetric matrix'], correctAnswer: 1, explanation: 'If one eigenvalue is 0, their product is 0, making the determinant 0 (Singular matrix).' },
+                    { id: 15, text: 'What are the eigenvalues of an Identity matrix (I)?', options: ['All zeros', 'All ones', 'Cannot be determined', 'Negative ones'], correctAnswer: 1, explanation: 'An identity matrix only has 1s on the diagonal. Its eigenvalues are exactly its diagonal elements: 1.' },
+                    { id: 16, text: 'For an Upper Triangular Matrix, the eigenvalues are simply:', options: ['The elements of the principal diagonal', 'Elements above diagonal', 'Zero', 'Determinant'], correctAnswer: 0, explanation: 'For any triangular matrix, eigenvalues are exactly the values on the main diagonal.' },
+                    { id: 17, text: 'If λ is an eigenvalue of matrix A, what is the eigenvalue of its inverse (A⁻¹)?', options: ['-λ', 'λ²', '1 / λ', '0'], correctAnswer: 2, explanation: 'Eigenvalues of an inverse matrix are the reciprocals of the original eigenvalues.' },
+                    { id: 18, text: 'If Matrix A has eigenvalues 2 and 3, what are the eigenvalues of Matrix A²?', options: ['2 and 3', '4 and 9', '8 and 27', '5 and 6'], correctAnswer: 1, explanation: 'If A has eigenvalue λ, then A² has eigenvalue λ². So, 2² = 4 and 3² = 9.' },
+                    { id: 19, text: 'What is the relation between the eigenvalues of a matrix A and its transpose A^T?', options: ['Negatives of each other', 'Reciprocals', 'They are exactly the same', 'A^T has no eigenvalues'], correctAnswer: 2, explanation: 'A matrix and its transpose share the exact same characteristic equation and eigenvalues.' },
+                    { id: 20, text: 'What is the Trace of a matrix?', options: ['Sum of all elements', 'Product of diagonal elements', 'Sum of elements on the principal diagonal', 'Inverse of determinant'], correctAnswer: 2, explanation: 'The trace is the sum of the elements along the main diagonal from top-left to bottom-right.' }
+                ]
+            },
+            'phase1-d3': {
+                title: 'Day 3: Stats (Data Collection) & PMS (Intro)',
+                questions: [
+                    { id: 1, text: 'Data collected originally for the first time by the investigator is called:', options: ['Secondary Data', 'Primary Data', 'Grouped Data', 'Published Data'], correctAnswer: 1, explanation: 'Primary data is first-hand information collected directly by the researcher.' },
+                    { id: 2, text: 'Which of the following is an example of Secondary Data?', options: ['Conducting a live survey', 'Interviewing people on the street', 'Data extracted from a government census report', 'Measuring the heights of students in class'], correctAnswer: 2, explanation: 'Secondary data is data that has already been collected and published by someone else.' },
+                    { id: 3, text: 'Which type of data is generally considered more reliable and accurate for a specific study?', options: ['Secondary Data', 'Primary Data', 'Tertiary Data', 'Internet Data'], correctAnswer: 1, explanation: 'Primary data is collected with the specific study in mind, making it highly reliable.' },
+                    { id: 4, text: 'Data relating to qualitative attributes like gender, color, or honesty is called:', options: ['Quantitative Data', 'Discrete Data', 'Continuous Data', 'Qualitative Data'], correctAnswer: 3, explanation: 'Qualitative data describes categories or attributes that cannot be measured numerically.' },
+                    { id: 5, text: 'Data that can be measured numerically (like height, weight, income) is called:', options: ['Qualitative Data', 'Quantitative Data', 'Nominal Data', 'Ordinal Data'], correctAnswer: 1, explanation: 'Quantitative data deals with numbers and things that can be measured objectively.' },
+                    { id: 6, text: 'The number of students in a classroom is an example of a:', options: ['Continuous Variable', 'Discrete Variable', 'Qualitative Variable', 'Constant'], correctAnswer: 1, explanation: 'Discrete variables take on exact, countable whole numbers (you can\'t have 2.5 students).' },
+                    { id: 7, text: 'The temperature of a city over a week is an example of a:', options: ['Continuous Variable', 'Discrete Variable', 'Qualitative Variable', 'Constant'], correctAnswer: 0, explanation: 'Continuous variables can take any fractional or decimal value within a range.' },
+                    { id: 8, text: 'Unorganized data collected directly from an experiment before any grouping is known as:', options: ['Grouped data', 'Secondary data', 'Raw data', 'Frequency distribution'], correctAnswer: 2, explanation: 'Raw data is the initial, unprocessed data directly from the source.' },
+                    { id: 9, text: 'Which method is NOT a way of collecting Primary Data?', options: ['Direct personal observation', 'Mailed questionnaires', 'Reading Wikipedia articles', 'Telephone interviews'], correctAnswer: 2, explanation: 'Reading Wikipedia is sourcing secondary data, not conducting primary research.' },
+                    { id: 10, text: 'What is a "Questionnaire"?', options: ['A list of answers', 'A device to measure temperature', 'A structured list of questions used to gather primary data', 'A statistical formula'], correctAnswer: 2, explanation: 'A questionnaire is the most common tool for gathering primary data via surveys.' },
+                    { id: 11, text: 'By definition, a "Project" is a:', options: ['Continuous daily routine', 'Temporary endeavor undertaken to create a unique product or service', 'Permanent organizational structure', 'Unplanned activity'], correctAnswer: 1, explanation: 'A project is defined by having a specific start and end date (temporary) and a unique outcome.' },
+                    { id: 12, text: 'Which of the following is NOT an example of a project?', options: ['Building a new bridge', 'Developing a new software app', 'Daily maintenance of a school building', 'Planning a wedding'], correctAnswer: 2, explanation: 'Daily maintenance is a continuous, repetitive operation, not a temporary project.' },
+                    { id: 13, text: 'What is the primary role of a Project Manager?', options: ['To fund the project', 'To execute all the technical work alone', 'To plan, execute, and close the project on time and within budget', 'To purchase materials only'], correctAnswer: 2, explanation: 'The PM leads the team to achieve project goals within the given constraints.' },
+                    { id: 14, text: 'The "Triple Constraint" in project management refers to:', options: ['Time, Cost, and Scope', 'People, Process, and Tools', 'Planning, Execution, and Review', 'Quality, Risk, and Rewards'], correctAnswer: 0, explanation: 'If you change Time, Cost, or Scope, at least one of the other two must also change.' },
+                    { id: 15, text: 'Who is a "Stakeholder" in a project?', options: ['Only the project manager', 'Only the people paying for the project', 'Anyone who is affected by or can affect the project', 'Only the government'], correctAnswer: 2, explanation: 'Stakeholders include the team, customers, sponsors, and even the local community.' },
+                    { id: 16, text: 'What is the very first phase in a standard Project Life Cycle?', options: ['Planning', 'Execution', 'Closure', 'Initiation'], correctAnswer: 3, explanation: 'Initiation is where the project is defined at a high level and authorized.' },
+                    { id: 17, text: '"Scope Creep" refers to:', options: ['A project finishing early', 'Uncontrolled changes or continuous growth in a project\'s scope', 'A team member leaving', 'Reducing the budget'], correctAnswer: 1, explanation: 'Scope creep happens when new features are added without adjusting time or cost.' },
+                    { id: 18, text: 'Which of these is a crucial "Soft Skill" for a Project Manager?', options: ['Advanced coding', 'Effective Communication', 'Operating heavy machinery', 'Complex calculus'], correctAnswer: 1, explanation: 'PMs spend up to 90% of their time communicating with stakeholders and team members.' },
+                    { id: 19, text: 'A "Deliverable" in project management is:', options: ['A tangible or intangible good/service produced as a result of the project', 'A delivery truck', 'A project delay', 'A cost estimate'], correctAnswer: 0, explanation: 'Deliverables are the actual outputs (like a software module or a physical report).' },
+                    { id: 20, text: 'What is the main difference between Projects and Operations?', options: ['Operations are temporary, Projects are ongoing', 'Projects are temporary and unique, Operations are ongoing and repetitive', 'They are exactly the same', 'Operations cost more money'], correctAnswer: 1, explanation: 'Operations sustain the business daily, while projects drive change and uniqueness.' }
+                ]
+            }
+        };
+
+        // --- LOCAL BROWSER STORAGE (LOCALSTORAGE) ---
+        const saveToLocal = (key, data) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) { console.error("Local storage saving error:", e); }
+        };
+
+        const loadFromLocal = (key) => {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : null;
+            } catch (e) { return null; }
+        };
+
+        // --- MAIN APP COMPONENT ---
+        function App() {
+            const [activeTab, setActiveTab] = useState('overview');
+            const [user, setUser] = useState(null);
+            const [firebaseInstance, setFirebaseInstance] = useState(null);
+            
+            // Core Data
+            const [completedTasks, setCompletedTasks] = useState([]);
+            const [quizStates, setQuizStates] = useState({});
+            
+            // Modal state
+            const [activeQuizId, setActiveQuizId] = useState(null);
+
+            // Connect to Cloud Database
+            useEffect(() => {
+                let unsubscribeSnapshot;
+                let unsubscribeAuth;
+
+                const initFirebase = async () => {
+                    try {
+                        if (typeof __firebase_config !== 'undefined') {
+                            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                            const { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                            const { getFirestore, doc, setDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+
+                            const firebaseConfig = JSON.parse(__firebase_config);
+                            const app = initializeApp(firebaseConfig);
+                            const auth = getAuth(app);
+                            const db = getFirestore(app);
+                            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+                            setFirebaseInstance({ db, auth, appId, doc, setDoc });
+
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+
+                            unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+                                setUser(currentUser);
+                                if (currentUser) {
+                                    const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'tasks_v2');
+                                    unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+                                        if (docSnap.exists()) {
+                                            const data = docSnap.data();
+                                            setCompletedTasks(data.completedIds || []);
+                                            setQuizStates(data.quizStates || {});
+                                        }
+                                    }, (error) => console.error("Snapshot error:", error));
+                                }
+                            });
+                        } else {
+                            throw new Error("Offline Mode");
+                        }
+                    } catch (err) {
+                        console.log("Running offline. Loading saved data from local browser memory...");
+                        const savedTasks = loadFromLocal('dcet_tasks');
+                        const savedQuizzes = loadFromLocal('dcet_quizzes');
+                        if (savedTasks) setCompletedTasks(savedTasks);
+                        if (savedQuizzes) setQuizStates(savedQuizzes);
+                    }
+                };
+
+                initFirebase();
+
+                return () => {
+                    if (unsubscribeAuth) unsubscribeAuth();
+                    if (unsubscribeSnapshot) unsubscribeSnapshot();
+                };
+            }, []);
+
+            // Checkmark logic
+            const toggleTask = async (taskId) => {
+                let newTasks;
+                if (completedTasks.includes(taskId)) {
+                    newTasks = completedTasks.filter(id => id !== taskId);
+                } else {
+                    newTasks = [...completedTasks, taskId];
+                }
+                setCompletedTasks(newTasks);
+                saveToLocal('dcet_tasks', newTasks);
+                
+                if (firebaseInstance && user) {
+                    try {
+                        const { db, appId, doc, setDoc } = firebaseInstance;
+                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tasks_v2');
+                        await setDoc(docRef, { completedIds: newTasks }, { merge: true });
+                    } catch(err) { }
+                }
+            };
+
+            // Quiz logic
+            const openQuiz = (quizId) => setActiveQuizId(quizId);
+            const closeQuiz = () => setActiveQuizId(null);
+
+            const handleAnswerSelect = async (questionId, optionIndex) => {
+                const currentQuizState = quizStates[activeQuizId] || { answers: {}, submitted: false };
+                if (!currentQuizState.submitted) {
+                    const newAnswers = { ...currentQuizState.answers, [questionId]: optionIndex };
+                    const newQuizStates = { ...quizStates, [activeQuizId]: { ...currentQuizState, answers: newAnswers } };
+                    setQuizStates(newQuizStates); 
+                    saveToLocal('dcet_quizzes', newQuizStates);
+
+                    if (firebaseInstance && user) {
+                        try {
+                            const { db, appId, doc, setDoc } = firebaseInstance;
+                            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tasks_v2');
+                            await setDoc(docRef, { quizStates: newQuizStates }, { merge: true });
+                        } catch(err) { }
+                    }
+                }
+            };
+
+            const submitQuiz = async () => {
+                const currentQuizState = quizStates[activeQuizId] || { answers: {}, submitted: false };
+                const newQuizStates = { ...quizStates, [activeQuizId]: { ...currentQuizState, submitted: true } };
+                setQuizStates(newQuizStates);
+                saveToLocal('dcet_quizzes', newQuizStates);
+
+                if (firebaseInstance && user) {
+                    try {
+                        const { db, appId, doc, setDoc } = firebaseInstance;
+                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tasks_v2');
+                        await setDoc(docRef, { quizStates: newQuizStates }, { merge: true });
+                    } catch(err) { }
+                }
+            };
+
+            const calculateProgress = () => {
+                const totalTasks = PHASES.reduce((acc, phase) => acc + phase.days.reduce((dayAcc, day) => dayAcc + day.tasks.length, 0), 0);
+                if (totalTasks === 0) return 0;
+                return Math.round((completedTasks.length / totalTasks) * 100) || 0;
+            };
+
+            // Quiz Modal Render
+            const renderQuizModal = () => {
+                if (!activeQuizId) return null;
+                const quizData = QUIZ_DATABASE[activeQuizId];
+
+                if (!quizData) {
+                    return (
+                        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative">
+                                <button onClick={closeQuiz} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+                                    <XIcon size={24} />
+                                </button>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">Quiz Coming Soon!</h3>
+                                <p className="text-slate-600">The MCQs for this day have not been generated yet. Complete Days 1-3 first!</p>
+                                <button onClick={closeQuiz} className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+
+                const currentQuizState = quizStates[activeQuizId] || { answers: {}, submitted: false };
+                const userAnswers = currentQuizState.answers;
+                const quizSubmitted = currentQuizState.submitted;
+
+                let score = 0;
+                if (quizSubmitted) {
+                    quizData.questions.forEach(q => { if (userAnswers[q.id] === q.correctAnswer) score++; });
+                }
+
+                return (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+                            <div className="p-4 sm:p-6 border-b border-slate-200 flex justify-between items-center bg-indigo-50 rounded-t-2xl">
+                                <div>
+                                    <h3 className="text-xl font-bold text-indigo-900">{quizData.title}</h3>
+                                    {quizSubmitted && (
+                                        <p className={`text-sm font-bold mt-1 ${score > (quizData.questions.length/2) ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                            Final Score: {score} / {quizData.questions.length}
+                                        </p>
+                                    )}
+                                </div>
+                                <button onClick={closeQuiz} className="text-indigo-400 hover:text-indigo-700 transition">
+                                    <XIcon size={24} />
+                                </button>
+                            </div>
+
+                            <div className="overflow-y-auto p-4 sm:p-6 space-y-8">
+                                {quizData.questions.map((q, qIndex) => (
+                                    <div key={q.id} className="space-y-3">
+                                        <p className="font-semibold text-slate-800">
+                                            <span className="text-indigo-600 mr-2">{qIndex + 1}.</span>
+                                            {q.text}
+                                        </p>
+                                        <div className="space-y-2 pl-6">
+                                            {q.options.map((option, optIdx) => {
+                                                const isSelected = userAnswers[q.id] === optIdx;
+                                                const isCorrect = optIdx === q.correctAnswer;
+                                                let optionStyle = "border-slate-200 hover:border-indigo-300 text-slate-700 bg-white";
+                                                
+                                                if (quizSubmitted) {
+                                                    if (isCorrect) optionStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
+                                                    else if (isSelected && !isCorrect) optionStyle = "border-red-400 bg-red-50 text-red-800";
+                                                    else optionStyle = "border-slate-200 opacity-50 bg-slate-50";
+                                                } else if (isSelected) {
+                                                    optionStyle = "border-indigo-500 bg-indigo-50 text-indigo-800 ring-1 ring-indigo-500";
+                                                }
+
+                                                return (
+                                                    <button
+                                                        key={optIdx}
+                                                        onClick={() => handleAnswerSelect(q.id, optIdx)}
+                                                        disabled={quizSubmitted}
+                                                        className={`w-full text-left p-3 rounded-lg border transition-all flex items-start gap-3 ${optionStyle}`}
+                                                    >
+                                                        <div className="mt-0.5 flex-shrink-0">
+                                                            {quizSubmitted && isCorrect && <CheckIcon size={18} className="text-emerald-500" />}
+                                                            {quizSubmitted && isSelected && !isCorrect && <XCircleIcon size={18} className="text-red-500" />}
+                                                            {!quizSubmitted && <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-indigo-500' : 'border-slate-300'}`}>
+                                                                {isSelected && <div className="w-2 h-2 bg-indigo-500 rounded-full" />}
+                                                            </div>}
+                                                        </div>
+                                                        <span className="text-sm">{option}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        
+                                        {quizSubmitted && (
+                                            <div className="pl-6 mt-2">
+                                                <div className={`p-3 rounded-lg text-sm ${userAnswers[q.id] === q.correctAnswer ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>
+                                                    <strong>Explanation:</strong> {q.explanation}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="p-4 sm:p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end">
+                                {!quizSubmitted ? (
+                                    <button 
+                                        onClick={submitQuiz}
+                                        disabled={Object.keys(userAnswers).length !== quizData.questions.length}
+                                        className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                    >
+                                        Submit Answers
+                                    </button>
+                                ) : (
+                                    <button onClick={closeQuiz} className="bg-slate-800 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-slate-900 transition">
+                                        Close & Return
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-20">
+                    <header className="bg-indigo-900 text-white sticky top-0 z-20 shadow-md">
+                        <div className="max-w-4xl mx-auto px-4 py-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                                        <TargetIcon className="text-indigo-300" />
+                                        DCET 2026 Tracker
+                                    </h1>
+                                    <p className="text-indigo-200 text-sm mt-1">CS Student Edition • Target: 100 Marks</p>
+                                </div>
+                                <div className="text-right hidden sm:block">
+                                    <div className="text-sm text-indigo-200">Exam Date</div>
+                                    <div className="font-bold">May 23, 2026</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between text-xs mb-1 font-medium text-indigo-200">
+                                    <span>Overall Progress</span>
+                                    <span>{calculateProgress()}%</span>
+                                </div>
+                                <div className="w-full bg-indigo-950 rounded-full h-2.5">
+                                    <div className="bg-emerald-400 h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${calculateProgress()}%` }}></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex overflow-x-auto border-t border-indigo-800 bg-indigo-950/50 backdrop-blur-sm" style={{scrollbarWidth: 'none'}}>
+                            <div className="max-w-4xl mx-auto flex w-full">
+                                <button onClick={() => setActiveTab('overview')} className={`flex-1 py-3 px-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === 'overview' ? 'border-emerald-400 text-emerald-300 bg-indigo-900/50' : 'border-transparent text-indigo-300 hover:text-white'}`}>
+                                    Overview & Routine
+                                </button>
+                                {PHASES.map(phase => (
+                                    <button key={phase.id} onClick={() => setActiveTab(phase.id)} className={`flex-1 py-3 px-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === phase.id ? 'border-emerald-400 text-emerald-300 bg-indigo-900/50' : 'border-transparent text-indigo-300 hover:text-white'}`}>
+                                        {phase.title.split(':')[0]}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-4xl mx-auto px-4 py-8">
+                        {activeTab === 'overview' && (
+                            <div className="space-y-8">
+                                <section>
+                                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <ZapIcon className="text-amber-500 w-5 h-5" />
+                                        Phase 0: CS Strategic Analysis
+                                    </h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {CS_STRATEGY.map((item, idx) => (
+                                            <div key={idx} className={`p-4 rounded-xl border ${item.color} shadow-sm bg-opacity-50`}>
+                                                <div className="text-xs font-bold uppercase tracking-wider mb-1 opacity-80">{item.level}</div>
+                                                <div className="font-semibold text-lg">{item.label}</div>
+                                                <div className="mt-2 text-sm opacity-90">{item.subjects}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                                <section>
+                                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <ClockIcon className="text-indigo-500 w-5 h-5" />
+                                        Daily Routine Habits
+                                    </h2>
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                                    <tr>
+                                                        <th className="px-4 py-3 font-semibold">Time Block</th>
+                                                        <th className="px-4 py-3 font-semibold">Duration</th>
+                                                        <th className="px-4 py-3 font-semibold">Weekday (4.5h)</th>
+                                                        <th className="px-4 py-3 font-semibold">Weekend (7.5h)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {ROUTINES.map((routine, idx) => (
+                                                        <tr key={idx} className="hover:bg-slate-50/50">
+                                                            <td className="px-4 py-3 font-medium text-slate-800">{routine.time}</td>
+                                                            <td className="px-4 py-3 text-slate-500">{routine.duration}</td>
+                                                            <td className="px-4 py-3">{routine.weekday}</td>
+                                                            <td className="px-4 py-3">{routine.weekend}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        )}
+
+                        {PHASES.map(phase => activeTab === phase.id && (
+                            <div key={phase.id} className="space-y-6">
+                                <div className="mb-6">
+                                    <h2 className="text-2xl font-bold text-slate-800">{phase.title}</h2>
+                                    <p className="text-slate-500 flex items-center gap-2 mt-1">
+                                        <CalendarIcon className="w-4 h-4" /> {phase.dates}
+                                    </p>
+                                </div>
+                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    {phase.days.map((day) => {
+                                        const isAllChecked = day.tasks.length > 0 && day.tasks.every((_, i) => completedTasks.includes(`${phase.id}-d${day.day}-t${i}`));
+                                        return (
+                                            <div key={day.day} className={`bg-white rounded-xl shadow-sm border p-5 transition-all duration-200 ${isAllChecked ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200 hover:border-indigo-300'}`}>
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div>
+                                                        <div className="font-bold text-lg text-slate-800">Day {day.day}</div>
+                                                        <div className="text-sm text-slate-500">{day.date}</div>
+                                                    </div>
+                                                    {isAllChecked && <CheckCircleIcon className="text-emerald-500 w-6 h-6" />}
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {day.tasks.map((task, idx) => {
+                                                        const taskId = `${phase.id}-d${day.day}-t${idx}`;
+                                                        const isChecked = completedTasks.includes(taskId);
+                                                        const hasQuiz = task.includes('MCQ') || task.includes('Sectional');
+                                                        const quizId = `${phase.id}-d${day.day}`;
+                                                        const isQuizSubmitted = quizStates[quizId]?.submitted;
+                                                        
+                                                        return (
+                                                            <div key={taskId} className="flex items-start justify-between group">
+                                                                <label className={`flex items-start gap-3 cursor-pointer flex-1 ${isChecked ? 'opacity-60' : ''}`}>
+                                                                    <button onClick={(e) => { e.preventDefault(); toggleTask(taskId); }} className="mt-0.5 flex-shrink-0 focus:outline-none">
+                                                                        {isChecked ? <CheckSquareIcon className="w-5 h-5 text-emerald-500" /> : <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white group-hover:border-indigo-400 transition-colors" />}
+                                                                    </button>
+                                                                    <span className={`text-sm leading-tight pt-0.5 transition-all ${isChecked ? 'line-through text-slate-500' : 'text-slate-700 font-medium group-hover:text-indigo-900'}`}>{task}</span>
+                                                                </label>
+                                                                {hasQuiz && (
+                                                                    <button onClick={() => openQuiz(quizId)} className={`ml-2 p-1.5 rounded-md transition-colors shadow-sm flex-shrink-0 flex items-center gap-1 ${isQuizSubmitted ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'text-indigo-500 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700'}`} title={isQuizSubmitted ? "Review Completed Quiz" : "Take Quiz"}>
+                                                                        {isQuizSubmitted ? <CheckCircleIcon size={16} /> : <BookOpenIcon size={16} />}
+                                                                        <span className="text-xs font-bold sm:hidden lg:inline">{isQuizSubmitted ? "Done" : "Quiz"}</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                {phase.id === 'phase3' && (
+                                    <div className="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
+                                        <h3 className="font-bold text-amber-900 mb-2 flex items-center gap-2"><AlertCircleIcon className="w-5 h-5 text-amber-600" />The "Why Did I Miss It?" Protocol</h3>
+                                        <ul className="space-y-2 text-sm text-amber-800">
+                                            <li><span className="font-bold text-red-600">Type A (Gap):</span> Forgot formula. <ChevronRightIcon className="inline w-3 h-3"/> Rote memorize immediately.</li>
+                                            <li><span className="font-bold text-yellow-600">Type B (Silly):</span> Calculation error. <ChevronRightIcon className="inline w-3 h-3"/> Slow down on algebra.</li>
+                                            <li><span className="font-bold text-blue-600">Type C (Read):</span> Missed keywords. <ChevronRightIcon className="inline w-3 h-3"/> Highlight keywords.</li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </main>
+                    
+                    {renderQuizModal()}
+                    <div className="fixed bottom-0 w-full text-center py-3 bg-slate-100/80 backdrop-blur text-xs text-slate-500 border-t border-slate-200 z-10">
+                        All progress and test scores are permanently saved!
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
