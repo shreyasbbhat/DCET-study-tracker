@@ -5,14 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DCET 2026 Study Tracker</title>
     
-    <!-- Load Tailwind CSS -->
+    <script src="tracker_data.js"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Load React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Load Babel for JSX translation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
@@ -21,6 +18,9 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // PULLING DATA FROM tracker_data.js
+        const { CS_STRATEGY, ROUTINES, PHASES, QUIZ_DATABASE } = window;
+
         // --- ICONS ---
         const TargetIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
         const ZapIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
@@ -28,655 +28,144 @@
         const CalendarIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
         const CheckCircleIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
         const CheckSquareIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>;
-        const BookOpenIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
-        const AlertCircleIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
         const XIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
-        const CheckIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
         const XCircleIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>;
-        const ChevronRightIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 
-        // --- TIMETABLE DATA ---
-        const CS_STRATEGY = [
-            { level: 'Native', label: 'Very Easy', subjects: 'IT Skills (All) & Stats U4', color: 'bg-green-100 text-green-800 border-green-200' },
-            { level: 'Moderate', label: 'Formula/Theory', subjects: 'Stats (U1-3) & PMS (All)', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-            { level: 'Hard', label: 'Practice Heavy', subjects: 'Engg Math (Calc/Trigo)', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-            { level: 'Unfamiliar', label: 'Bottleneck', subjects: 'FEEE (U1-U4)', color: 'bg-red-100 text-red-800 border-red-200' }
-        ];
-
-        const ROUTINES = [
-            { time: 'Morning', duration: '1.5h - 2.5h', weekday: '06:00 AM: Heavy Focus (Math/FEEE)', weekend: '08:00 AM: Heavy 1 (Math/FEEE)' },
-            { time: 'Afternoon', duration: '2.0h', weekday: 'N/A (Work hours)', weekend: '01:00 PM: Heavy 2 (Stats/Trigo)' },
-            { time: 'Evening 1', duration: '1.5h - 2.0h', weekday: '07:00 PM: Theory (PMS/IT/Stats)', weekend: '04:30 PM: Light Theory / Mocks' },
-            { time: 'Evening 2', duration: '1.0h - 1.5h', weekday: '09:00 PM: MCQ Practice', weekend: '08:00 PM: Sunday Catch-up Buffer' },
-        ];
-
-        const PHASES = [
-            {
-                id: 'phase1',
-                title: 'Phase 1: The First Pass',
-                dates: 'Apr 20 - May 4',
-                days: [
-                    { day: 1, date: 'Mon, Apr 20', tasks: ['Math U1 (Matrices)', 'IT U1 (Coding Basics)', 'Evening MCQs'] },
-                    { day: 2, date: 'Tue, Apr 21', tasks: ['FEEE U1 (Safety/Earthing)', 'Math U1 (Eigenvalues)', 'Evening MCQs'] },
-                    { day: 3, date: 'Wed, Apr 22', tasks: ['Stats U1 (Data Collection)', 'PMS U1 (Intro/Role)', 'Evening MCQs'] },
-                    { day: 4, date: 'Thu, Apr 23', tasks: ['Math U2 (Straight Lines)', 'IT U2 (HTML/JS)', 'Evening MCQs'] },
-                    { day: 5, date: 'Fri, Apr 24', tasks: ["FEEE U2 (Ohm's Law, AC/DC)", 'Stats U2 (Tables/Charts)', 'Evening MCQs'] },
-                    { day: 6, date: 'Sat, Apr 25', tasks: ['Math U3 (Allied Angles)', 'FEEE U2 (Measuring)', 'PMS U2 & Weekend MCQs'] },
-                    { day: 7, date: 'Sun, Apr 26', tasks: ['FEEE U3 (MCB/Wiring)', 'Math U3 (Compound)', 'Stats U2 & Weekend MCQs'] },
-                    { day: 8, date: 'Mon, Apr 27', tasks: ['Math U4 (Diff Calc Basics)', 'IT U3 (BPA/ERP)', 'Evening MCQs'] },
-                    { day: 9, date: 'Tue, Apr 28', tasks: ['FEEE U3 (Relays/Protection)', 'Stats U3 (Mean/Mode)', 'Evening MCQs'] },
-                    { day: 10, date: 'Wed, Apr 29', tasks: ['Math U4 (Diff Calc Apps)', 'PMS U3 (Life Cycle)', 'Evening MCQs'] },
-                    { day: 11, date: 'Thu, Apr 30', tasks: ['FEEE U4 (Transformers)', 'IT U4 (Cloud/IoT)', 'Evening MCQs'] },
-                    { day: 12, date: 'Fri, May 1', tasks: ['Math U5 (Integral Calc)', 'Stats U3 (Range/Std Dev)', 'Evening MCQs'] },
-                    { day: 13, date: 'Sat, May 2', tasks: ['FEEE U4 (Motors/Batteries)', 'Math U5 (Def. Integrals)', 'PMS U4 & Weekend MCQs'] },
-                    { day: 14, date: 'Sun, May 3', tasks: ['PMS U5 (Control/Gantt)', 'IT U5 (Cyber Security)', 'Catch-up & MCQs'] },
-                    { day: 15, date: 'Mon, May 4', tasks: ['FEEE U5 (Digital Electronics)', 'Stats U4 (Python)', 'Evening MCQs'] }
-                ]
-            },
-            {
-                id: 'phase2',
-                title: 'Phase 2: Consolidation',
-                dates: 'May 5 - May 15',
-                days: [
-                    { day: 16, date: 'Tue, May 5', tasks: ['FEEE (Rev U1 & U2)', 'Math (Rev U1 & U2)', '20+ MCQs'] },
-                    { day: 17, date: 'Wed, May 6', tasks: ['Stats (Rev U1, U2, U4)', 'PMS (Rev U1 & U2)', '20+ MCQs'] },
-                    { day: 18, date: 'Thu, May 7', tasks: ['Math (U3 Trigo Intense)', 'IT (Rev all 5 Units)', '40+ MCQs'] },
-                    { day: 19, date: 'Fri, May 8', tasks: ['FEEE (Rev U3 & U4)', 'PMS (Rev U3 & U4)', '20+ MCQs'] },
-                    { day: 20, date: 'Sat, May 9', tasks: ['Math (U4 Calc Intense)', 'Review FEEE Mistakes', '📝 FEEE Sectional (50Qs)'] },
-                    { day: 21, date: 'Sun, May 10', tasks: ['Math (U5 Int. Intense)', 'Sunday Catch-up', '📝 Math Sectional (50Qs)'] },
-                    { day: 22, date: 'Mon, May 11', tasks: ['Stats (U3 Variance)', 'PMS (Rev U5 CPM)', '20+ MCQs'] },
-                    { day: 23, date: 'Tue, May 12', tasks: ['FEEE (Rev U5 Electronics)', 'Rest / Free Time', '40+ MCQs'] },
-                    { day: 24, date: 'Wed, May 13', tasks: ['Review Test Mistakes', 'FEEE Weak Concepts', '📝 FEEE Sectional 2'] },
-                    { day: 25, date: 'Thu, May 14', tasks: ['Review Test Mistakes', 'Stats/PMS Weak Concepts', '📝 Stats+PMS Sectional'] },
-                    { day: 26, date: 'Fri, May 15', tasks: ['Memorize Formulas', 'Create Cheat Sheet', 'Print OMR sheets'] }
-                ]
-            },
-            {
-                id: 'phase3',
-                title: 'Phase 3: Revision Week',
-                dates: 'May 16 - May 23',
-                days: [
-                    { day: 27, date: 'Sat, May 16', tasks: ['🏆 Full Mock Test 1', 'Map errors (A/B/C)', 'Micro-drills'] },
-                    { day: 28, date: 'Sun, May 17', tasks: ['📄 PYQ Paper 1', 'Analyze DCET traps', 'Review cheat sheet'] },
-                    { day: 29, date: 'Mon, May 18', tasks: ['🏆 Full Mock Test 2', 'Finish 15 mins early', 'Guessing strategy practice'] },
-                    { day: 30, date: 'Tue, May 19', tasks: ['📄 PYQ Paper 2', 'Reverse engineering', 'Plug options backward'] },
-                    { day: 31, date: 'Wed, May 20', tasks: ['🏆 Full Mock Test 3', 'Accuracy focus', 'Skip blind questions'] },
-                    { day: 32, date: 'Thu, May 21', tasks: ['🔨 Weakness Purge', 'Find 3 worst topics', '4.5 hrs of targeted MCQs'] },
-                    { day: 33, date: 'Fri, May 22', tasks: ['👁️ Visual Scan Day', 'Pack bag (ID/Pens)', 'Sleep 8+ hours'] },
-                    { day: 34, date: 'Sat, May 23', tasks: ['🚀 EXAM DAY: Crush the DCET!'] }
-                ]
-            }
-        ];
-
-        const QUIZ_DATABASE = {
-            'phase1-d1': {
-                title: 'Day 1: Math (Matrices) & IT (Coding)',
-                questions: [
-                    { id: 1, text: 'What is the determinant of the matrix A = [[4, 2], [1, 3]]?', options: ['10', '14', '12', '8'], correctAnswer: 0, explanation: 'Det(A) = (4 × 3) - (2 × 1) = 12 - 2 = 10.' },
-                    { id: 2, text: 'For two matrices A and B to be multiplied (A × B), which condition must be true?', options: ['Both matrices must have the exact same dimensions.', 'The number of rows in A must equal the number of rows in B.', 'The number of columns in A must equal the number of rows in B.', 'Both matrices must be square matrices.'], correctAnswer: 2, explanation: 'Matrix multiplication rule: Columns of 1st matrix = Rows of 2nd matrix.' },
-                    { id: 3, text: 'According to Cramer\'s rule, what does Δ (Delta) represent?', options: ['The determinant of the constant terms.', 'The identity matrix.', 'The determinant of the coefficient matrix.', 'The inverse of the matrix.'], correctAnswer: 2, explanation: 'Δ is calculated using only the coefficients of the variables x, y, and z.' },
-                    { id: 4, text: 'If the determinant of a square matrix is zero, the matrix is called a:', options: ['Identity Matrix', 'Singular Matrix', 'Non-Singular Matrix', 'Null Matrix'], correctAnswer: 1, explanation: 'A matrix with a determinant of 0 is singular and does not have an inverse.' },
-                    { id: 5, text: 'If A is a non-singular matrix, then A × A⁻¹ is equal to:', options: ['Null Matrix (0)', 'Identity Matrix (I)', 'Matrix A itself', 'A²'], correctAnswer: 1, explanation: 'Multiplying a matrix by its inverse always results in the Identity matrix (I).' },
-                    { id: 6, text: 'The transpose of a column matrix is a:', options: ['Row matrix', 'Null matrix', 'Diagonal matrix', 'Identity matrix'], correctAnswer: 0, explanation: 'Transposing changes columns into rows, so a column matrix becomes a row matrix.' },
-                    { id: 7, text: 'If (A^T)^T represents the transpose of a transposed matrix, what is it equal to?', options: ['A⁻¹', 'I', 'A', '-A'], correctAnswer: 2, explanation: 'Transposing a matrix twice returns it to its original state.' },
-                    { id: 8, text: 'To find the adjoint of a 2x2 matrix, you must:', options: ['Multiply all elements by -1', 'Swap the principal diagonal elements and change the signs of the other two', 'Divide all elements by the determinant', 'Swap the rows and columns'], correctAnswer: 1, explanation: 'Shortcut for 2x2 adjoint: Swap top-left with bottom-right, and multiply top-right and bottom-left by -1.' },
-                    { id: 9, text: 'What is the determinant of a 3x3 Identity matrix (I)?', options: ['0', '3', '1', '9'], correctAnswer: 2, explanation: 'The determinant of any Identity matrix, regardless of size, is always 1.' },
-                    { id: 10, text: 'If A and B are symmetric matrices, then (A + B) is:', options: ['Skew-symmetric', 'Symmetric', 'Null', 'Identity'], correctAnswer: 1, explanation: 'The sum of two symmetric matrices is always a symmetric matrix.' },
-                    { id: 11, text: 'In a standard flowchart, what does a Diamond (◇) symbol represent?', options: ['Start / Stop', 'Input / Output', 'Processing', 'Decision making (Yes/No)'], correctAnswer: 3, explanation: 'A diamond is used when the code has an IF/ELSE condition.' },
-                    { id: 12, text: 'Which of the following is the best definition of an "Algorithm"?', options: ['A graphical representation of logic', 'A step-by-step mathematical or logical procedure to solve a problem', 'A programming language', 'A hardware component'], correctAnswer: 1, explanation: 'An algorithm is the logical sequence of steps written in plain text.' },
-                    { id: 13, text: 'In basic Android App Development, which file type is predominantly used to design the visual UI layout?', options: ['.java', '.py', '.xml', '.mp4'], correctAnswer: 2, explanation: 'Android uses XML (eXtensible Markup Language) to define layouts, buttons, and text views.' },
-                    { id: 14, text: 'In a flowchart, which symbol is traditionally used to represent an Input or Output operation?', options: ['Rectangle', 'Parallelogram', 'Oval', 'Hexagon'], correctAnswer: 1, explanation: 'Parallelograms are strictly used to show data entering (Input) or leaving (Output) the system.' },
-                    { id: 15, text: 'Which symbol is used to indicate the Start or End of a flowchart?', options: ['Rectangle', 'Diamond', 'Oval (Terminal)', 'Arrow'], correctAnswer: 2, explanation: 'Ovals or rounded rectangles are used as terminal symbols for Start and Stop.' },
-                    { id: 16, text: 'What does IDE stand for in coding?', options: ['Internal Data Execution', 'Integrated Development Environment', 'Interactive Design Element', 'Internet Development Engine'], correctAnswer: 1, explanation: 'An IDE (like VS Code or Android Studio) provides tools to write, test, and debug code.' },
-                    { id: 17, text: 'What software translates high-level programming language into machine code?', options: ['Compiler', 'Operating System', 'Browser', 'Database'], correctAnswer: 0, explanation: 'Compilers and Interpreters translate human-readable code into 0s and 1s.' },
-                    { id: 18, text: 'A "bug" in programming refers to:', options: ['A virus', 'An error or flaw in the code', 'A feature', 'A hardware failure'], correctAnswer: 1, explanation: 'A bug is a logical or syntax error that causes a program to crash or behave unexpectedly.' },
-                    { id: 19, text: 'What is the standard shape for a "Process" or "Calculation" step in a flowchart?', options: ['Rectangle', 'Circle', 'Triangle', 'Diamond'], correctAnswer: 0, explanation: 'Rectangles represent actions, calculations, or variable assignments.' },
-                    { id: 20, text: 'What is the very first step in solving a programming problem?', options: ['Writing the code', 'Testing', 'Understanding and defining the problem', 'Drawing a flowchart'], correctAnswer: 2, explanation: 'Before algorithms or code, you must clearly define what problem you are solving.' }
-                ]
-            },
-            'phase1-d2': {
-                title: 'Day 2: FEEE (Safety) & Math (Eigenvalues)',
-                questions: [
-                    { id: 1, text: 'What is the primary purpose of Earthing in an electrical installation?', options: ['To save electricity', 'To protect human life from electric shock', 'To increase the voltage', 'To convert AC to DC'], correctAnswer: 1, explanation: 'Earthing provides a safe, low-resistance path for leakage current, protecting users.' },
-                    { id: 2, text: 'What does PPE stand for in electrical safety?', options: ['Personal Protective Equipment', 'Primary Power Engine', 'Phase Protection Element', 'Power Plant Engineering'], correctAnswer: 0, explanation: 'PPE includes safety gloves, helmets, and insulated shoes.' },
-                    { id: 3, text: 'What should be the very first step if you see a person getting electrocuted?', options: ['Pull them away with bare hands', 'Pour water on them', 'Turn off the main power supply', 'Call an ambulance immediately'], correctAnswer: 2, explanation: 'Always turn off the power source first. Touching the victim directly can electrocute you.' },
-                    { id: 4, text: 'Which color wire is universally used to represent the Earth connection in standard AC wiring?', options: ['Red', 'Black', 'Green or Green/Yellow', 'Blue'], correctAnswer: 2, explanation: 'Green or Green with a Yellow stripe is the standard color code for earthing wires.' },
-                    { id: 5, text: 'In Plate Earthing, the earth electrode is typically made of which material?', options: ['Aluminum', 'Copper or Galvanized Iron (GI)', 'Plastic', 'Lead'], correctAnswer: 1, explanation: 'Copper and GI are highly conductive and resist underground corrosion.' },
-                    { id: 6, text: 'What happens to the earth resistance if we add salt and charcoal powder to the earthing pit?', options: ['It increases', 'It decreases', 'It remains the same', 'It fluctuates'], correctAnswer: 1, explanation: 'Salt and charcoal retain moisture and increase soil conductivity, lowering resistance.' },
-                    { id: 7, text: 'Which class of fire extinguisher should be used on electrical fires?', options: ['Class A (Water)', 'Class C (Dry Chemical/CO2)', 'Class D (Metals)', 'Class K (Oils)'], correctAnswer: 1, explanation: 'Never use water! Class C extinguishers (CO2 or Dry Chemical) are non-conductive.' },
-                    { id: 8, text: 'What is the standard frequency of the AC power supply in India?', options: ['60 Hz', '120 Hz', '50 Hz', '240 Hz'], correctAnswer: 2, explanation: 'The standard AC frequency in India is 50 Hz.' },
-                    { id: 9, text: 'In an electrical context, what does a "Fuse" do?', options: ['Stores energy', 'Protects circuit by melting on excess current', 'Converts AC to DC', 'Increases current'], correctAnswer: 1, explanation: 'A fuse is a sacrificial device that breaks the circuit to prevent fire during overload.' },
-                    { id: 10, text: 'What is the best immediate artificial respiration method for an electrocution victim?', options: ['CPR (Mouth-to-Mouth)', 'Giving them water', 'Slapping their face', 'Making them sit up'], correctAnswer: 0, explanation: 'CPR must be started immediately to maintain blood flow and oxygen.' },
-                    { id: 11, text: 'The characteristic equation of a square matrix A is given by which formula?', options: ['|A + λI| = 0', '|A - λI| = 0', 'A = λI', '|A| = λ'], correctAnswer: 1, explanation: 'Subtract λ from the diagonal elements and equate the determinant to zero: |A - λI| = 0.' },
-                    { id: 12, text: 'The sum of the eigenvalues of a matrix is equal to:', options: ['The determinant', 'Zero', 'The trace of the matrix', 'Product of diagonal elements'], correctAnswer: 2, explanation: 'Fundamental property: Sum of eigenvalues = Trace of the matrix (sum of main diagonal).' },
-                    { id: 13, text: 'The product of the eigenvalues of a matrix A is equal to:', options: ['The trace', 'The determinant of matrix A', '1', 'Zero'], correctAnswer: 1, explanation: 'Fundamental property: Product of eigenvalues = Determinant of the matrix (|A|).' },
-                    { id: 14, text: 'If a matrix A has an eigenvalue λ = 0, what does this tell us?', options: ['Identity matrix', 'Singular matrix (Det = 0)', 'Inverse matrix', 'Symmetric matrix'], correctAnswer: 1, explanation: 'If one eigenvalue is 0, their product is 0, making the determinant 0 (Singular matrix).' },
-                    { id: 15, text: 'What are the eigenvalues of an Identity matrix (I)?', options: ['All zeros', 'All ones', 'Cannot be determined', 'Negative ones'], correctAnswer: 1, explanation: 'An identity matrix only has 1s on the diagonal. Its eigenvalues are exactly its diagonal elements: 1.' },
-                    { id: 16, text: 'For an Upper Triangular Matrix, the eigenvalues are simply:', options: ['The elements of the principal diagonal', 'Elements above diagonal', 'Zero', 'Determinant'], correctAnswer: 0, explanation: 'For any triangular matrix, eigenvalues are exactly the values on the main diagonal.' },
-                    { id: 17, text: 'If λ is an eigenvalue of matrix A, what is the eigenvalue of its inverse (A⁻¹)?', options: ['-λ', 'λ²', '1 / λ', '0'], correctAnswer: 2, explanation: 'Eigenvalues of an inverse matrix are the reciprocals of the original eigenvalues.' },
-                    { id: 18, text: 'If Matrix A has eigenvalues 2 and 3, what are the eigenvalues of Matrix A²?', options: ['2 and 3', '4 and 9', '8 and 27', '5 and 6'], correctAnswer: 1, explanation: 'If A has eigenvalue λ, then A² has eigenvalue λ². So, 2² = 4 and 3² = 9.' },
-                    { id: 19, text: 'What is the relation between the eigenvalues of a matrix A and its transpose A^T?', options: ['Negatives of each other', 'Reciprocals', 'They are exactly the same', 'A^T has no eigenvalues'], correctAnswer: 2, explanation: 'A matrix and its transpose share the exact same characteristic equation and eigenvalues.' },
-                    { id: 20, text: 'What is the Trace of a matrix?', options: ['Sum of all elements', 'Product of diagonal elements', 'Sum of elements on the principal diagonal', 'Inverse of determinant'], correctAnswer: 2, explanation: 'The trace is the sum of the elements along the main diagonal from top-left to bottom-right.' }
-                ]
-            },
-            'phase1-d3': {
-                title: 'Day 3: Stats (Data Collection) & PMS (Intro)',
-                questions: [
-                    { id: 1, text: 'Data collected originally for the first time by the investigator is called:', options: ['Secondary Data', 'Primary Data', 'Grouped Data', 'Published Data'], correctAnswer: 1, explanation: 'Primary data is first-hand information collected directly by the researcher.' },
-                    { id: 2, text: 'Which of the following is an example of Secondary Data?', options: ['Conducting a live survey', 'Interviewing people on the street', 'Data extracted from a government census report', 'Measuring the heights of students in class'], correctAnswer: 2, explanation: 'Secondary data is data that has already been collected and published by someone else.' },
-                    { id: 3, text: 'Which type of data is generally considered more reliable and accurate for a specific study?', options: ['Secondary Data', 'Primary Data', 'Tertiary Data', 'Internet Data'], correctAnswer: 1, explanation: 'Primary data is collected with the specific study in mind, making it highly reliable.' },
-                    { id: 4, text: 'Data relating to qualitative attributes like gender, color, or honesty is called:', options: ['Quantitative Data', 'Discrete Data', 'Continuous Data', 'Qualitative Data'], correctAnswer: 3, explanation: 'Qualitative data describes categories or attributes that cannot be measured numerically.' },
-                    { id: 5, text: 'Data that can be measured numerically (like height, weight, income) is called:', options: ['Qualitative Data', 'Quantitative Data', 'Nominal Data', 'Ordinal Data'], correctAnswer: 1, explanation: 'Quantitative data deals with numbers and things that can be measured objectively.' },
-                    { id: 6, text: 'The number of students in a classroom is an example of a:', options: ['Continuous Variable', 'Discrete Variable', 'Qualitative Variable', 'Constant'], correctAnswer: 1, explanation: 'Discrete variables take on exact, countable whole numbers (you can\'t have 2.5 students).' },
-                    { id: 7, text: 'The temperature of a city over a week is an example of a:', options: ['Continuous Variable', 'Discrete Variable', 'Qualitative Variable', 'Constant'], correctAnswer: 0, explanation: 'Continuous variables can take any fractional or decimal value within a range.' },
-                    { id: 8, text: 'Unorganized data collected directly from an experiment before any grouping is known as:', options: ['Grouped data', 'Secondary data', 'Raw data', 'Frequency distribution'], correctAnswer: 2, explanation: 'Raw data is the initial, unprocessed data directly from the source.' },
-                    { id: 9, text: 'Which method is NOT a way of collecting Primary Data?', options: ['Direct personal observation', 'Mailed questionnaires', 'Reading Wikipedia articles', 'Telephone interviews'], correctAnswer: 2, explanation: 'Reading Wikipedia is sourcing secondary data, not conducting primary research.' },
-                    { id: 10, text: 'What is a "Questionnaire"?', options: ['A list of answers', 'A device to measure temperature', 'A structured list of questions used to gather primary data', 'A statistical formula'], correctAnswer: 2, explanation: 'A questionnaire is the most common tool for gathering primary data via surveys.' },
-                    { id: 11, text: 'By definition, a "Project" is a:', options: ['Continuous daily routine', 'Temporary endeavor undertaken to create a unique product or service', 'Permanent organizational structure', 'Unplanned activity'], correctAnswer: 1, explanation: 'A project is defined by having a specific start and end date (temporary) and a unique outcome.' },
-                    { id: 12, text: 'Which of the following is NOT an example of a project?', options: ['Building a new bridge', 'Developing a new software app', 'Daily maintenance of a school building', 'Planning a wedding'], correctAnswer: 2, explanation: 'Daily maintenance is a continuous, repetitive operation, not a temporary project.' },
-                    { id: 13, text: 'What is the primary role of a Project Manager?', options: ['To fund the project', 'To execute all the technical work alone', 'To plan, execute, and close the project on time and within budget', 'To purchase materials only'], correctAnswer: 2, explanation: 'The PM leads the team to achieve project goals within the given constraints.' },
-                    { id: 14, text: 'The "Triple Constraint" in project management refers to:', options: ['Time, Cost, and Scope', 'People, Process, and Tools', 'Planning, Execution, and Review', 'Quality, Risk, and Rewards'], correctAnswer: 0, explanation: 'If you change Time, Cost, or Scope, at least one of the other two must also change.' },
-                    { id: 15, text: 'Who is a "Stakeholder" in a project?', options: ['Only the project manager', 'Only the people paying for the project', 'Anyone who is affected by or can affect the project', 'Only the government'], correctAnswer: 2, explanation: 'Stakeholders include the team, customers, sponsors, and even the local community.' },
-                    { id: 16, text: 'What is the very first phase in a standard Project Life Cycle?', options: ['Planning', 'Execution', 'Closure', 'Initiation'], correctAnswer: 3, explanation: 'Initiation is where the project is defined at a high level and authorized.' },
-                    { id: 17, text: '"Scope Creep" refers to:', options: ['A project finishing early', 'Uncontrolled changes or continuous growth in a project\'s scope', 'A team member leaving', 'Reducing the budget'], correctAnswer: 1, explanation: 'Scope creep happens when new features are added without adjusting time or cost.' },
-                    { id: 18, text: 'Which of these is a crucial "Soft Skill" for a Project Manager?', options: ['Advanced coding', 'Effective Communication', 'Operating heavy machinery', 'Complex calculus'], correctAnswer: 1, explanation: 'PMs spend up to 90% of their time communicating with stakeholders and team members.' },
-                    { id: 19, text: 'A "Deliverable" in project management is:', options: ['A tangible or intangible good/service produced as a result of the project', 'A delivery truck', 'A project delay', 'A cost estimate'], correctAnswer: 0, explanation: 'Deliverables are the actual outputs (like a software module or a physical report).' },
-                    { id: 20, text: 'What is the main difference between Projects and Operations?', options: ['Operations are temporary, Projects are ongoing', 'Projects are temporary and unique, Operations are ongoing and repetitive', 'They are exactly the same', 'Operations cost more money'], correctAnswer: 1, explanation: 'Operations sustain the business daily, while projects drive change and uniqueness.' }
-                ]
-            },
-            'phase1-d4': {
-                title: 'Day 4: Math (Straight Lines) & IT (HTML/JS)',
-                questions: [
-                    { id: 1, text: 'What is the slope of a horizontal line?', options: ['0', '1', '-1', 'Infinity'], correctAnswer: 0, explanation: 'A horizontal line has no steepness, so its slope is exactly 0.' },
-                    { id: 2, text: 'What is the slope (m) of a line passing through points (x1, y1) and (x2, y2)?', options: ['(x2-x1)/(y2-y1)', '(y2-y1)/(x2-x1)', '(y2+y1)/(x2+x1)', 'x1*y2 - y1*x2'], correctAnswer: 1, explanation: 'Slope is defined as "Rise over Run", which is change in y divided by change in x.' },
-                    { id: 3, text: 'Which of these represents the intercept form of a straight line?', options: ['y = mx + c', 'y - y1 = m(x - x1)', 'x/a + y/b = 1', 'ax + by + c = 0'], correctAnswer: 2, explanation: 'The intercept form is x/a + y/b = 1, where "a" is the x-intercept and "b" is the y-intercept.' },
-                    { id: 4, text: 'What is the slope-intercept form of a straight line?', options: ['x/a + y/b = 1', 'y = mx + c', 'y - y1 = m(x - x1)', 'ax + by + c = 0'], correctAnswer: 1, explanation: 'In y = mx + c, "m" represents the slope and "c" represents the y-intercept.' },
-                    { id: 5, text: 'The equation of a straight line passing through the origin with slope m is:', options: ['y = mx', 'x/a + y/b = 1', 'y = m/x', 'y = x + m'], correctAnswer: 0, explanation: 'If it passes through the origin (0,0), the y-intercept "c" is 0, leaving just y = mx.' },
-                    { id: 6, text: 'Two straight lines are parallel if their slopes (m1 and m2) satisfy:', options: ['m1 * m2 = 1', 'm1 = m2', 'm1 * m2 = -1', 'm1 + m2 = 0'], correctAnswer: 1, explanation: 'Parallel lines have the exact same steepness, so their slopes are equal.' },
-                    { id: 7, text: 'Two straight lines are perpendicular if their slopes (m1 and m2) satisfy:', options: ['m1 = m2', 'm1 + m2 = 1', 'm1 * m2 = -1', 'm1 / m2 = 0'], correctAnswer: 2, explanation: 'Perpendicular lines have negative reciprocal slopes, meaning m1 * m2 = -1.' },
-                    { id: 8, text: 'What is the general form of the equation of a straight line?', options: ['y = mx + c', 'x/a + y/b = 1', 'ax + by + c = 0', 'y - y1 = m(x - x1)'], correctAnswer: 2, explanation: 'The general linear equation is ax + by + c = 0.' },
-                    { id: 9, text: 'What is the slope of the line given by ax + by + c = 0?', options: ['-a/b', 'a/b', '-b/a', 'b/a'], correctAnswer: 0, explanation: 'Rearranging ax + by + c = 0 into y = mx + c gives y = (-a/b)x - c/b. Thus slope is -a/b.' },
-                    { id: 10, text: 'The angle θ between two lines with slopes m1 and m2 is found using:', options: ['sin θ = (m1+m2)/(1-m1m2)', 'cos θ = |m1-m2|', 'tan θ = |(m1-m2)/(1+m1m2)|', 'tan θ = (m1*m2)/(m1+m2)'], correctAnswer: 2, explanation: 'The standard formula for the angle between two intersecting lines uses tangent.' },
-                    { id: 11, text: 'What does HTML stand for?', options: ['HyperText Machine Language', 'HyperText Markup Language', 'Hyper Transfer Markup Language', 'High-level Text Markup Language'], correctAnswer: 1, explanation: 'HTML is the standard markup language for creating web pages.' },
-                    { id: 12, text: 'Which HTML tag is used to define the largest heading?', options: ['<head>', '<h6>', '<h1>', '<heading>'], correctAnswer: 2, explanation: '<h1> defines the most important and largest heading. It goes down to <h6> for the smallest.' },
-                    { id: 13, text: 'Which HTML tag is used to create a clickable hyperlink?', options: ['<link>', '<a>', '<href>', '<hyper>'], correctAnswer: 1, explanation: 'The <a> (anchor) tag is used to create hyperlinks linking to other pages.' },
-                    { id: 14, text: 'In JavaScript, which keyword is NOT used to declare a variable?', options: ['let', 'var', 'const', 'def'], correctAnswer: 3, explanation: '"def" is used in Python. JS uses let, const, and var.' },
-                    { id: 15, text: 'Which HTML tag is used to embed JavaScript code into a webpage?', options: ['<javascript>', '<js>', '<script>', '<code>'], correctAnswer: 2, explanation: 'The <script> tag wraps around JavaScript code inside an HTML document.' },
-                    { id: 16, text: 'Which tag is used to create a bulleted (unordered) list in HTML?', options: ['<ol>', '<ul>', '<li>', '<list>'], correctAnswer: 1, explanation: '<ul> stands for Unordered List (bullet points), while <ol> is for Ordered List (numbers).' },
-                    { id: 17, text: 'In JavaScript, what does `console.log()` do?', options: ['Opens a new browser window', 'Prints a message or output to the browser console', 'Creates a popup alert', 'Restarts the code'], correctAnswer: 1, explanation: 'console.log() is the primary tool for developers to print text and debug variables.' },
-                    { id: 18, text: 'What is the correct way to write an Array in JavaScript?', options: ['let colors = "red", "green", "blue"', 'let colors = (1:"red", 2:"green")', 'let colors = ["red", "green", "blue"]', 'let colors = {"red", "green", "blue"}'], correctAnswer: 2, explanation: 'Arrays in JS are declared using square brackets [].' },
-                    { id: 19, text: 'What does CSS stand for?', options: ['Computer Style Sheets', 'Creative Style System', 'Cascading Style Sheets', 'Colorful Style Sheets'], correctAnswer: 2, explanation: 'CSS determines how HTML elements are styled and laid out visually.' },
-                    { id: 20, text: 'Which attribute specifies the path to an image in the HTML <img> tag?', options: ['href', 'src', 'alt', 'link'], correctAnswer: 1, explanation: 'The "src" (source) attribute tells the browser where to find the image file.' }
-                ]
-            },
-            'phase1-d5': {
-                title: 'Day 5: FEEE (Ohm\'s Law) & Stats (Tables)',
-                questions: [
-                    { id: 1, text: 'What is the mathematical formula for Ohm\'s Law?', options: ['V = I / R', 'P = V * I', 'V = I * R', 'I = V * R'], correctAnswer: 2, explanation: 'Voltage (V) equals Current (I) multiplied by Resistance (R).' },
-                    { id: 2, text: 'What is the standard unit of electrical resistance?', options: ['Volt', 'Ampere', 'Ohm', 'Watt'], correctAnswer: 2, explanation: 'Resistance is measured in Ohms (Ω).' },
-                    { id: 3, text: 'In a Series circuit, which electrical quantity remains the same across all components?', options: ['Voltage', 'Current', 'Power', 'Resistance'], correctAnswer: 1, explanation: 'Because there is only one path for the electrons, Current (I) is identical everywhere in a series circuit.' },
-                    { id: 4, text: 'In a Parallel circuit, which electrical quantity remains the same across all branches?', options: ['Voltage', 'Current', 'Resistance', 'Energy'], correctAnswer: 0, explanation: 'Components in parallel are connected across the same two nodes, sharing the exact same Voltage.' },
-                    { id: 5, text: 'If two 10-Ohm resistors are connected in series, what is the total resistance?', options: ['5 Ohms', '10 Ohms', '20 Ohms', '100 Ohms'], correctAnswer: 2, explanation: 'In series, resistances add up: R_total = R1 + R2 = 10 + 10 = 20 Ohms.' },
-                    { id: 6, text: 'What does AC stand for in electrical engineering?', options: ['Alternating Current', 'Active Charge', 'Amplitude Current', 'Applied Capacitor'], correctAnswer: 0, explanation: 'Alternating Current reverses direction periodically, unlike Direct Current (DC).' },
-                    { id: 7, text: 'Which electronic device is used to convert AC (Alternating Current) into DC (Direct Current)?', options: ['Transformer', 'Inverter', 'Rectifier', 'Motor'], correctAnswer: 2, explanation: 'A rectifier (usually made of diodes) converts AC to DC. An inverter does the opposite (DC to AC).' },
-                    { id: 8, text: 'Kirchhoff\'s Current Law (KCL) states that the sum of currents entering a junction equals the sum of currents leaving. This is based on the conservation of:', options: ['Energy', 'Mass', 'Charge', 'Momentum'], correctAnswer: 2, explanation: 'KCL is based on the Law of Conservation of Charge (electrons can\'t vanish).' },
-                    { id: 9, text: 'Kirchhoff\'s Voltage Law (KVL) is based on the conservation of:', options: ['Charge', 'Energy', 'Power', 'Flux'], correctAnswer: 1, explanation: 'KVL states that the sum of voltages in a closed loop is zero, based on Conservation of Energy.' },
-                    { id: 10, text: 'What is the formula for electrical Power?', options: ['P = V / I', 'P = I² * R', 'P = V * R', 'P = V² / I'], correctAnswer: 1, explanation: 'Power can be P = V * I, or using Ohm\'s law, P = I² * R.' },
-                    { id: 11, text: 'In Statistics, the process of grouping raw data into different classes/categories is called:', options: ['Tabulation', 'Classification', 'Observation', 'Collection'], correctAnswer: 1, explanation: 'Classification is sorting data based on shared characteristics before placing it into tables.' },
-                    { id: 12, text: 'When data is classified according to time (years, months, weeks), it is called:', options: ['Geographical classification', 'Qualitative classification', 'Chronological classification', 'Quantitative classification'], correctAnswer: 2, explanation: 'Chronological means relating to dates and time sequences.' },
-                    { id: 13, text: 'When data is classified based on location (cities, states, countries), it is called:', options: ['Chronological classification', 'Geographical classification', 'Nominal classification', 'Ordinal classification'], correctAnswer: 1, explanation: 'Geographical or Spatial classification groups data by area or region.' },
-                    { id: 14, text: 'A statistical table is a systematic arrangement of data in:', options: ['Circles and graphs', 'Paragraphs', 'Rows and Columns', 'Equations'], correctAnswer: 2, explanation: 'Tabulation presents classified data in a grid of rows and columns.' },
-                    { id: 15, text: 'In a statistical table, what is the heading of a column called?', options: ['Stub', 'Caption', 'Body', 'Title'], correctAnswer: 1, explanation: 'The vertical column headings are called Captions or Box-heads.' },
-                    { id: 16, text: 'In a statistical table, what is the heading of a row called?', options: ['Caption', 'Footnote', 'Stub', 'Source'], correctAnswer: 2, explanation: 'The horizontal row headings on the left side are called Stubs.' },
-                    { id: 17, text: 'Which of the following is an example of a Continuous Frequency class?', options: ['1, 2, 3, 4', '0-10, 10-20, 20-30', 'Red, Blue, Green', 'Male, Female'], correctAnswer: 1, explanation: 'Continuous classes cover a range of values without gaps, allowing decimals (like height or weight).' },
-                    { id: 18, text: 'The number of times a specific observation or class occurs in a dataset is called its:', options: ['Mean', 'Range', 'Frequency', 'Tally'], correctAnswer: 2, explanation: 'Frequency is simply the count of how many times a value appears.' },
-                    { id: 19, text: 'Which type of frequency is calculated by successively adding frequencies from top to bottom?', options: ['Relative frequency', 'Marginal frequency', 'Cumulative frequency', 'Percentage frequency'], correctAnswer: 2, explanation: 'Cumulative frequency keeps a running total of the frequencies.' },
-                    { id: 20, text: 'What is the purpose of using Tally marks (||||) ?', options: ['To count frequencies easily while reading raw data', 'To calculate the average', 'To draw a pie chart', 'To measure standard deviation'], correctAnswer: 0, explanation: 'Tally marks are a quick visual method for keeping count of occurrences before writing the final frequency number.' }
-                ]
-            },
-            'phase1-d6': {
-                title: 'Day 6: Math (Angles), PMS (Teams) & FEEE (Measuring)',
-                questions: [
-                    { id: 1, text: 'In Trigonometry, what is the value of sin(90° - θ)?', options: ['sin θ', '-sin θ', 'cos θ', '-cos θ'], correctAnswer: 2, explanation: 'In the first quadrant, sin(90 - θ) becomes the co-function cos(θ) and remains positive.' },
-                    { id: 2, text: 'What is the value of tan(180° - θ)?', options: ['tan θ', '-tan θ', 'cot θ', '-cot θ'], correctAnswer: 1, explanation: '(180 - θ) lies in the second quadrant where tangent is negative.' },
-                    { id: 3, text: 'What is the expansion formula for sin(A + B)?', options: ['sinA sinB + cosA cosB', 'sinA cosB + cosA sinB', 'sinA cosB - cosA sinB', 'cosA cosB - sinA sinB'], correctAnswer: 1, explanation: 'The compound angle formula is sin(A+B) = sinA cosB + cosA sinB.' },
-                    { id: 4, text: 'What is the expansion formula for cos(A + B)?', options: ['cosA cosB + sinA sinB', 'cosA cosB - sinA sinB', 'sinA cosB + cosA sinB', 'cosA sinB - sinA cosB'], correctAnswer: 1, explanation: 'For cosine compound angles, the sign flips: cos(A+B) = cosA cosB - sinA sinB.' },
-                    { id: 5, text: 'What is the correct formula for tan(A + B)?', options: ['(tanA + tanB) / (1 - tanA tanB)', '(tanA - tanB) / (1 + tanA tanB)', '(1 - tanA tanB) / (tanA + tanB)', 'tanA + tanB'], correctAnswer: 0, explanation: 'The tangent compound formula involves addition on top and subtraction on the bottom.' },
-                    { id: 6, text: 'What does the formula sin(2A) expand to?', options: ['2 sinA', 'sin²A - cos²A', '2 sinA cosA', '1 - 2sin²A'], correctAnswer: 2, explanation: 'The double angle formula for sine is 2*sin(A)*cos(A).' },
-                    { id: 7, text: 'Which of the following is a valid expansion for cos(2A)?', options: ['2 sinA cosA', '2 cos²A - 1', '1 + 2sin²A', 'cosA - sinA'], correctAnswer: 1, explanation: 'cos(2A) can be written as cos²A - sin²A, or 2cos²A - 1, or 1 - 2sin²A.' },
-                    { id: 8, text: 'Using the double angle formula, what is 1 - cos(2A) equal to?', options: ['2 cos²A', '2 sin²A', 'sin(2A)', 'tan²A'], correctAnswer: 1, explanation: 'Since cos(2A) = 1 - 2sin²A, rearranging gives 1 - cos(2A) = 2sin²A.' },
-                    { id: 9, text: 'What is the exact value of sin(15°)?', options: ['1/2', '√3/2', '(√3 - 1) / 2√2', '(√3 + 1) / 2√2'], correctAnswer: 2, explanation: 'Calculated using sin(45 - 30) = sin45 cos30 - cos45 sin30.' },
-                    { id: 10, text: 'What is the value of the fundamental identity: sin²θ + cos²θ ?', options: ['0', '1', '-1', 'tan²θ'], correctAnswer: 1, explanation: 'This is the Pythagorean trigonometric identity, which always equals 1.' },
-                    { id: 11, text: 'What does the abbreviation WBS stand for in Project Management?', options: ['Work Breakdown Structure', 'Weekly Business Strategy', 'Work Baseline System', 'Wide Bandwidth Signal'], correctAnswer: 0, explanation: 'WBS is a hierarchical decomposition of the total scope of work to be carried out by the team.' },
-                    { id: 12, text: 'What is the primary purpose of creating a WBS?', options: ['To hire employees', 'To divide a complex project into smaller, manageable tasks', 'To calculate final profits', 'To write software code'], correctAnswer: 1, explanation: 'Breaking work down makes it easier to assign, estimate, and track.' },
-                    { id: 13, text: 'In a WBS, the lowest-level components (the actual actionable tasks) are called:', options: ['Milestones', 'Deliverables', 'Work Packages', 'Sub-projects'], correctAnswer: 2, explanation: 'A work package is the lowest level of the WBS where cost and duration can be reliably estimated.' },
-                    { id: 14, text: 'According to Bruce Tuckman, what are the four stages of Team Development?', options: ['Start, Middle, End, Review', 'Forming, Storming, Norming, Performing', 'Planning, Coding, Testing, Deploying', 'Initiating, Planning, Executing, Closing'], correctAnswer: 1, explanation: 'Tuckman\'s model is Forming, Storming, Norming, Performing (and later Adjourning).' },
-                    { id: 15, text: 'In which stage of team development does conflict typically peak as team members push against established boundaries?', options: ['Forming', 'Storming', 'Norming', 'Performing'], correctAnswer: 1, explanation: 'Storming is the turbulent phase where personalities clash and roles are challenged.' },
-                    { id: 16, text: 'What does a RACI matrix define in project management?', options: ['The project budget', 'The project schedule', 'Roles and Responsibilities for tasks', 'The technical architecture'], correctAnswer: 2, explanation: 'RACI is a responsibility assignment chart.' },
-                    { id: 17, text: 'What does the "A" in RACI stand for?', options: ['Actionable', 'Available', 'Accountable', 'Approved'], correctAnswer: 2, explanation: 'Responsible, Accountable, Consulted, Informed.' },
-                    { id: 18, text: 'A typical project team is usually "Cross-functional", meaning:', options: ['They all sit across from each other', 'They are composed of people with different skills and expertise', 'They only function when angry', 'They all share the exact same job title'], correctAnswer: 1, explanation: 'Cross-functional teams bring together designers, engineers, marketers, etc., to solve a complete problem.' },
-                    { id: 19, text: 'What is the goal of the "Norming" stage in team development?', options: ['To fight over roles', 'To resolve differences and establish team rules/cohesion', 'To disband the team', 'To define the project budget'], correctAnswer: 1, explanation: 'Norming is when the team finally stabilizes, agrees on rules, and starts working together.' },
-                    { id: 20, text: 'In a RACI chart, what does "Informed" (I) mean?', options: ['The person doing the work', 'The person who approves the work', 'The person who must be kept up-to-date on progress', 'The person fired from the project'], correctAnswer: 2, explanation: 'Informed people don\'t do the work, but they need to know the outcome.' },
-                    { id: 21, text: 'Which instrument is used to measure electrical current in a circuit?', options: ['Voltmeter', 'Wattmeter', 'Ammeter', 'Multimeter'], correctAnswer: 2, explanation: 'An Ammeter measures Amperes (current).' },
-                    { id: 22, text: 'How must an Ammeter be connected in a circuit to measure current correctly?', options: ['In parallel with the load', 'In series with the load', 'It doesn\'t matter', 'Connected directly to the earth wire'], correctAnswer: 1, explanation: 'It must be in series so that all the current flows through it.' },
-                    { id: 23, text: 'Which instrument is used to measure electrical potential difference (voltage)?', options: ['Ammeter', 'Galvanometer', 'Voltmeter', 'Megger'], correctAnswer: 2, explanation: 'A voltmeter measures voltage.' },
-                    { id: 24, text: 'How must a Voltmeter be connected in a circuit?', options: ['In series with the load', 'In parallel across the component being measured', 'In series with the battery only', 'To the ground wire'], correctAnswer: 1, explanation: 'It must be connected in parallel to measure the difference in potential across two points.' },
-                    { id: 25, text: 'Ideally, what should be the internal resistance of an Ammeter?', options: ['Infinite', 'Very high', 'Exactly 100 Ohms', 'Zero (or very low)'], correctAnswer: 3, explanation: 'It should have near-zero resistance so it doesn\'t block the current it is trying to measure.' },
-                    { id: 26, text: 'Ideally, what should be the internal resistance of a Voltmeter?', options: ['Zero', 'Infinite (or very high)', '1 Ohm', 'Depends on the battery'], correctAnswer: 1, explanation: 'It needs high resistance so that it doesn\'t draw any current away from the main circuit.' },
-                    { id: 27, text: 'Which measurement instrument is used to check high insulation resistance of electrical cables?', options: ['Ammeter', 'Voltmeter', 'Megger', 'Wattmeter'], correctAnswer: 2, explanation: 'A Megger provides high voltage to test if the wire insulation is breaking down.' },
-                    { id: 28, text: 'What does a Wattmeter measure?', options: ['Voltage', 'Current', 'Real electrical power', 'Resistance'], correctAnswer: 2, explanation: 'A wattmeter measures power in Watts (combining voltage and current readings).' },
-                    { id: 29, text: 'What instrument can measure Voltage, Current, and Resistance all in one device?', options: ['Megger', 'Oscilloscope', 'Multimeter', 'Energy Meter'], correctAnswer: 2, explanation: 'A multimeter is a multi-purpose diagnostic tool.' },
-                    { id: 30, text: 'Which meter is installed outside your house to measure total energy consumption for billing?', options: ['Ammeter', 'Voltmeter', 'Energy Meter (kWh meter)', 'Frequency Meter'], correctAnswer: 2, explanation: 'It integrates power over time to measure total energy used in Kilowatt-hours.' }
-                ]
-            },
-            'phase1-d7': {
-                title: 'Day 7: FEEE (Wiring), Math (Compound) & Stats (Graphs)',
-                questions: [
-                    { id: 1, text: 'What does MCB stand for in electrical wiring?', options: ['Main Circuit Board', 'Miniature Circuit Breaker', 'Maximum Current Block', 'Motor Control Box'], correctAnswer: 1, explanation: 'An MCB automatically switches off electrical circuits during an abnormal condition.' },
-                    { id: 2, text: 'What is the primary function of an MCB?', options: ['To increase voltage', 'To convert AC to DC', 'To protect the circuit against overload and short circuits', 'To save electricity'], correctAnswer: 2, explanation: 'It replaces traditional fuses by tripping the switch when current exceeds safe limits.' },
-                    { id: 3, text: 'What does ELCB stand for?', options: ['Electrical Load Control Board', 'Earth Leakage Circuit Breaker', 'Electronic Line Current Breaker', 'Extra Low Current Box'], correctAnswer: 1, explanation: 'ELCBs specifically detect current leaking to the earth (ground) to prevent fatal shocks.' },
-                    { id: 4, text: 'Which highly conductive metal is most commonly used for indoor domestic electrical wiring?', options: ['Aluminum', 'Iron', 'Copper', 'Silver'], correctAnswer: 2, explanation: 'Copper is the standard because of its excellent conductivity and flexibility.' },
-                    { id: 5, text: 'What type of wiring is hidden completely inside the walls of a house?', options: ['Cleat wiring', 'Casing and Capping', 'Concealed Conduit wiring', 'Batten wiring'], correctAnswer: 2, explanation: 'Concealed conduit is placed inside the plaster, making it safe and aesthetically pleasing.' },
-                    { id: 6, text: 'An electrical Relay is essentially an:', options: ['Electromechanical switch', 'Energy storage device', 'AC to DC converter', 'Resistor'], correctAnswer: 0, explanation: 'A relay uses a small electromagnet to switch a much larger electrical current on or off.' },
-                    { id: 7, text: 'What is the primary function of a standard electrical Switch?', options: ['To measure voltage', 'To make or break an electrical circuit', 'To step down voltage', 'To act as an earth wire'], correctAnswer: 1, explanation: 'A switch safely opens (breaks) or closes (makes) the path for current to flow.' },
-                    { id: 8, text: 'What does MCCB stand for?', options: ['Miniature Circuit Control Board', 'Molded Case Circuit Breaker', 'Main Control Circuit Breaker', 'Maximum Current Circuit Breaker'], correctAnswer: 1, explanation: 'MCCBs are heavy-duty circuit breakers used for industrial applications with higher current ratings.' },
-                    { id: 9, text: 'Why MUST a fuse or switch always be connected to the "Live" (Phase) wire, not the Neutral?', options: ['Live wire is cheaper', 'To safely disconnect the high voltage supply from the appliance during a fault', 'Neutral wire carries no current', 'To make it trip faster'], correctAnswer: 1, explanation: 'If placed on the neutral, the appliance would still have lethal voltage inside it even when switched off!' },
-                    { id: 10, text: 'What happens if the Live wire accidentally touches the Neutral wire without passing through any load?', options: ['The voltage increases', 'The appliance works faster', 'A short circuit occurs', 'Nothing happens'], correctAnswer: 2, explanation: 'Current spikes infinitely, causing sparks, fire, or the MCB to trip.' },
-                    { id: 11, text: 'What is the compound angle formula for sin(A - B)?', options: ['sinA cosB + cosA sinB', 'sinA cosB - cosA sinB', 'cosA cosB + sinA sinB', 'cosA cosB - sinA sinB'], correctAnswer: 1, explanation: 'For sine, subtraction keeps the minus sign: sinA cosB - cosA sinB.' },
-                    { id: 12, text: 'What is the compound angle formula for cos(A - B)?', options: ['cosA cosB - sinA sinB', 'sinA cosB - cosA sinB', 'cosA cosB + sinA sinB', 'sinA cosB + cosA sinB'], correctAnswer: 2, explanation: 'For cosine, the sign flips! So cos(A-B) uses addition.' },
-                    { id: 13, text: 'What is the formula for tan(A - B)?', options: ['(tanA + tanB)/(1 - tanA tanB)', '(tanA - tanB)/(1 + tanA tanB)', 'tanA - tanB', '1 / tan(A-B)'], correctAnswer: 1, explanation: 'Tangent subtraction has a minus on top and a plus on the bottom.' },
-                    { id: 14, text: 'If sinA = 3/5 and cosA = 4/5, what is sin(2A)?', options: ['7/5', '12/25', '24/25', '1'], correctAnswer: 2, explanation: 'Using sin(2A) = 2*sinA*cosA = 2*(3/5)*(4/5) = 24/25.' },
-                    { id: 15, text: 'Which of the following is equivalent to cos²A - sin²A?', options: ['1', 'sin(2A)', 'cos(2A)', 'tan(2A)'], correctAnswer: 2, explanation: 'This is the primary double angle formula for cosine.' },
-                    { id: 16, text: 'What is the exact value of cos(75°)?', options: ['(√3 + 1)/2√2', '(√3 - 1)/2√2', '1/2', '√3/2'], correctAnswer: 1, explanation: 'Use cos(45+30) = cos45*cos30 - sin45*sin30.' },
-                    { id: 17, text: 'Using transformation formulas, what is 2*sinA*cosB equal to?', options: ['sin(A+B) + sin(A-B)', 'sin(A+B) - sin(A-B)', 'cos(A+B) + cos(A-B)', 'cos(A+B) - cos(A-B)'], correctAnswer: 0, explanation: 'Product to sum formula for sine and cosine.' },
-                    { id: 18, text: 'What does 2*cosA*cosB expand to?', options: ['sin(A+B) + sin(A-B)', 'cos(A+B) + cos(A-B)', 'cos(A-B) - cos(A+B)', 'sin(A-B) - sin(A+B)'], correctAnswer: 1, explanation: 'Product of two cosines translates to the sum of two cosines.' },
-                    { id: 19, text: 'What is the value of sin(180° + θ)?', options: ['sin θ', 'cos θ', '-sin θ', '-cos θ'], correctAnswer: 2, explanation: '180+θ is in the 3rd quadrant, where sine is negative.' },
-                    { id: 20, text: 'What is the value of cos(360° - θ)?', options: ['cos θ', '-cos θ', 'sin θ', '-sin θ'], correctAnswer: 0, explanation: '360-θ is in the 4th quadrant, where cosine is positive.' },
-                    { id: 21, text: 'A pie chart represents categorical data using:', options: ['Bars', 'Sectors (slices) of a circle', 'Lines', 'Dots'], correctAnswer: 1, explanation: 'A pie chart divides a circle into sectors proportional to the quantity they represent.' },
-                    { id: 22, text: 'What is the total angle at the center of a full pie chart?', options: ['100 degrees', '180 degrees', '360 degrees', '90 degrees'], correctAnswer: 2, explanation: 'A full circle encompasses 360 degrees.' },
-                    { id: 23, text: 'A Histogram is drawn specifically for what kind of data?', options: ['Qualitative data', 'Discrete frequency distribution', 'Continuous frequency distribution', 'Raw unorganized data'], correctAnswer: 2, explanation: 'Histograms represent continuous data (like 0-10, 10-20), which is why the bars touch each other.' },
-                    { id: 24, text: 'In a standard histogram, the Area of a rectangular bar is proportional to the:', options: ['Class interval width', 'Class frequency', 'Cumulative frequency', 'Mid-point'], correctAnswer: 1, explanation: 'Area = width × height. Since width is constant, area represents the frequency.' },
-                    { id: 25, text: 'The width of the rectangles in a histogram represents the:', options: ['Frequency', 'Mean', 'Class interval size', 'Standard deviation'], correctAnswer: 2, explanation: 'The width along the X-axis spans the boundaries of the class (e.g., from 10 to 20).' },
-                    { id: 26, text: 'How does a Bar Chart visually differ from a Histogram?', options: ['Bar charts use circles', 'Bar charts have separate, non-touching rectangular bars', 'Histograms use lines', 'There is no difference'], correctAnswer: 1, explanation: 'Bar charts represent discrete or categorical data, so there are gaps between the bars. Histograms have no gaps.' },
-                    { id: 27, text: 'An Ogive (cumulative frequency polygon) is a graph constructed using:', options: ['Class frequencies', 'Cumulative frequencies', 'Percentage frequencies', 'Relative frequencies'], correctAnswer: 1, explanation: 'Ogives plot the running total (cumulative sum) of frequencies against class boundaries.' },
-                    { id: 28, text: 'The point where the "Less than Ogive" and the "More than Ogive" intersect gives the value of the:', options: ['Mean', 'Mode', 'Median', 'Range'], correctAnswer: 2, explanation: 'The intersection point drops exactly down to the Median value on the X-axis.' },
-                    { id: 29, text: 'In a 2D coordinate graph, the horizontal X-axis is technically called the:', options: ['Ordinate', 'Origin', 'Abscissa', 'Quadrant'], correctAnswer: 2, explanation: 'The X-coordinate is the abscissa, and the Y-coordinate is the ordinate.' },
-                    { id: 30, text: 'When constructing a pie chart, how do you calculate the angle for a specific component?', options: ['(Value / Total) * 100', '(Value / Total) * 360', 'Value * 360', 'Total / Value'], correctAnswer: 1, explanation: 'You find its fraction of the total and multiply by the 360 degrees of the circle.' }
-                ]
-            },
-            'phase1-d8': {
-                title: 'Day 8: Math (Diff Calc), IT (BPA) & FEEE',
-                questions: [
-                    { id: 1, text: 'What is the derivative of a constant (e.g., d/dx [5])?', options: ['1', 'x', '0', '5'], correctAnswer: 2, explanation: 'The rate of change of a constant is zero because it never changes.' },
-                    { id: 2, text: 'Using the power rule, what is the derivative of x^n ?', options: ['n * x^(n+1)', 'n * x^(n-1)', 'x^(n-1) / n', 'n * x'], correctAnswer: 1, explanation: 'Bring the power down to the front and subtract 1 from the exponent.' },
-                    { id: 3, text: 'What is the derivative of e^x ?', options: ['e^x', 'x * e^(x-1)', 'ln(x)', 'e'], correctAnswer: 0, explanation: 'The exponential function e^x is unique because its derivative is exactly itself.' },
-                    { id: 4, text: 'What is the derivative of ln(x) ?', options: ['e^x', '1/x', 'x', 'ln(1)'], correctAnswer: 1, explanation: 'The derivative of the natural logarithm ln(x) is 1/x.' },
-                    { id: 5, text: 'What is the derivative of sin(x)?', options: ['-sin(x)', 'cos(x)', '-cos(x)', 'tan(x)'], correctAnswer: 1, explanation: 'The derivative of sine is positive cosine.' },
-                    { id: 6, text: 'What is the derivative of cos(x)?', options: ['sin(x)', '-sin(x)', 'sec(x)', '-cos(x)'], correctAnswer: 1, explanation: 'The derivative of cosine is negative sine.' },
-                    { id: 7, text: 'What is the derivative of tan(x)?', options: ['sec²(x)', 'cot(x)', 'sec(x)tan(x)', '-csc²(x)'], correctAnswer: 0, explanation: 'The derivative of tangent is secant squared.' },
-                    { id: 8, text: 'According to the Product Rule, what is d/dx [u * v]?', options: ['du/dx * dv/dx', 'u * dv/dx + v * du/dx', 'u * dv/dx - v * du/dx', '(u*v) / dx'], correctAnswer: 1, explanation: 'The product rule is: first times derivative of second PLUS second times derivative of first.' },
-                    { id: 9, text: 'According to the Quotient Rule, what is the numerator for d/dx [u / v]?', options: ['v * du/dx - u * dv/dx', 'u * dv/dx - v * du/dx', 'v * du/dx + u * dv/dx', 'du/dx / dv/dx'], correctAnswer: 0, explanation: 'Low D-High minus High D-Low: (v * u\' - u * v\') / v².' },
-                    { id: 10, text: 'If y = f(g(x)), the Chain Rule states that dy/dx equals:', options: ['f\'(x) * g\'(x)', 'f\'(g(x)) + g\'(x)', 'f\'(g(x)) * g\'(x)', 'f(g\'(x))'], correctAnswer: 2, explanation: 'Derivative of the outside (keeping the inside) TIMES the derivative of the inside.' },
-                    { id: 11, text: 'What does BPA stand for in business technology?', options: ['Basic Programming Architecture', 'Business Process Automation', 'Binary Processing Algorithm', 'Business Protocol Alignment'], correctAnswer: 1, explanation: 'BPA uses technology to execute recurring tasks or processes automatically.' },
-                    { id: 12, text: 'Which of the following is a primary benefit of Business Process Automation?', options: ['Increasing human error', 'Slowing down communication', 'Reducing operational costs and saving time', 'Creating more physical paperwork'], correctAnswer: 2, explanation: 'BPA handles repetitive tasks instantly, saving money and human labor time.' },
-                    { id: 13, text: 'What does ERP stand for?', options: ['Electronic Record Protocol', 'Enterprise Resource Planning', 'Entity Relationship Programming', 'Economic Revenue Prediction'], correctAnswer: 1, explanation: 'ERP software integrates all main business processes (HR, finance, supply chain) into one system.' },
-                    { id: 14, text: 'Which of the following is a core feature of an ERP system?', options: ['Playing video games', 'A centralized database shared by all departments', 'Writing HTML code', 'Cooling down computer servers'], correctAnswer: 1, explanation: 'ERP eliminates data silos by keeping all company data in one central location.' },
-                    { id: 15, text: 'Which department in a company would use an ERP system to track employee attendance and payroll?', options: ['Marketing', 'Supply Chain', 'Human Resources (HR)', 'IT Security'], correctAnswer: 2, explanation: 'The HR module of an ERP handles everything related to employees.' },
-                    { id: 16, text: 'What does CRM stand for, which is often integrated with ERP?', options: ['Customer Relationship Management', 'Code Revision Module', 'Centralized Resource Manager', 'Corporate Revenue Maker'], correctAnswer: 0, explanation: 'CRM focuses on managing interactions with current and potential customers.' },
-                    { id: 17, text: 'Before implementing BPA, a company must first:', options: ['Fire its employees', 'Map out and understand its current manual processes', 'Buy the most expensive computers', 'Change its name'], correctAnswer: 1, explanation: 'You cannot automate a process if you do not understand the exact steps involved.' },
-                    { id: 18, text: 'In an ERP system, if the Sales department logs a new order, who can instantly see the updated inventory requirements?', options: ['Only the CEO', 'Only the customer', 'The Manufacturing/Supply Chain department', 'No one until the end of the month'], correctAnswer: 2, explanation: 'Because of the centralized database, data updates in real-time across all relevant departments.' },
-                    { id: 19, text: 'Which of the following is a popular, real-world ERP software provider?', options: ['Adobe Photoshop', 'SAP', 'Mozilla Firefox', 'Spotify'], correctAnswer: 1, explanation: 'SAP, Oracle, and Microsoft Dynamics are leading ERP software providers.' },
-                    { id: 20, text: 'A major disadvantage/challenge of implementing an ERP system is:', options: ['It speeds up work too much', 'High initial cost and complex implementation', 'It uses too much electricity', 'It deletes all company data'], correctAnswer: 1, explanation: 'ERP systems are notoriously expensive and can take months or years to fully implement.' },
-                    { id: 21, text: 'The operating principle of a standard MCB relies on two mechanisms. One is a magnetic trip for short circuits. What is the other one for overloads?', options: ['Chemical reaction', 'Bimetallic strip (Thermal trip)', 'Optical sensor', 'Hydraulic pressure'], correctAnswer: 1, explanation: 'A bimetallic strip bends when heated by an overload current, eventually tripping the breaker.' },
-                    { id: 22, text: 'Which component in a domestic wiring system records the total electrical energy consumed?', options: ['Main Switch', 'Distribution Board', 'Energy Meter', 'Fuse Box'], correctAnswer: 2, explanation: 'The energy meter (installed by the electricity board) measures consumption in kWh.' },
-                    { id: 23, text: 'In standard Indian domestic wiring, what is the voltage between Phase (Live) and Neutral?', options: ['110V AC', '230V AC', '440V AC', '12V DC'], correctAnswer: 1, explanation: 'Single-phase domestic supply in India is standardized at 230 Volts AC (50Hz).' },
-                    { id: 24, text: 'What is the purpose of the Distribution Board (DB) in a house?', options: ['To generate electricity', 'To convert AC to DC', 'To divide the main power supply into individual subsidiary circuits', 'To connect to the internet'], correctAnswer: 2, explanation: 'The DB takes the main feed and splits it to different rooms/appliances, each protected by its own MCB.' },
-                    { id: 25, text: 'In a 3-pin plug, which pin is made thicker and longer than the other two?', options: ['Live pin', 'Neutral pin', 'Earth pin', 'None, they are all the same'], correctAnswer: 2, explanation: 'The Earth pin is longer so it connects first (grounding the appliance before power flows) and thicker so it cannot be inserted into the live hole.' },
-                    { id: 26, text: 'Which wiring system provides the best protection against fire and mechanical damage?', options: ['Cleat wiring', 'Wood casing wiring', 'Concealed Conduit wiring', 'Flexible wire thrown on the floor'], correctAnswer: 2, explanation: 'Concealed PVC or metal conduits inside the wall offer maximum protection.' },
-                    { id: 27, text: 'When wiring a switch to control a light bulb, the switch MUST be placed in series with which wire?', options: ['Neutral', 'Earth', 'Phase (Live)', 'Any wire'], correctAnswer: 2, explanation: 'Switching the Phase ensures the bulb has zero voltage when turned off, making it safe to touch or change.' },
-                    { id: 28, text: 'What does a "Two-way switch" allow you to do?', options: ['Turn on two appliances at once', 'Control one appliance (like a light) from two different locations', 'Reverse the current direction', 'Switch between AC and DC'], correctAnswer: 1, explanation: 'Two-way switches are commonly used in staircases to control the same light from the top and bottom.' },
-                    { id: 29, text: 'What is the unit of electrical energy measured by the Energy Meter?', options: ['Watt', 'Ampere-hour', 'Kilowatt-hour (kWh)', 'Joule per second'], correctAnswer: 2, explanation: '1 kWh is equal to 1 "Unit" on an electricity bill.' },
-                    { id: 30, text: 'What happens if the Live wire accidentally touches the Neutral wire without passing through any load?', options: ['The voltage increases', 'The appliance works faster', 'A short circuit occurs, causing massive current flow', 'Nothing happens'], correctAnswer: 2, explanation: 'Because there is near-zero resistance, current spikes infinitely, causing sparks, fire, or the MCB to trip.' }
-                ]
-            },
-            'phase1-d9': {
-                title: 'Day 9: FEEE (Protection) & Stats (Mean/Mode)',
-                questions: [
-                    { id: 1, text: 'In a power system, what is the primary function of a Protective Relay?', options: ['To generate power', 'To sense a fault and send a trip signal to the circuit breaker', 'To manually turn off lights', 'To step up voltage'], correctAnswer: 1, explanation: 'The relay is the "brain" that senses the fault, and the circuit breaker is the "muscle" that disconnects the circuit.' },
-                    { id: 2, text: 'Which type of relay uses an electromagnetic coil to attract an armature?', options: ['Thermal relay', 'Solid-state relay', 'Electromagnetic attraction relay', 'Induction relay'], correctAnswer: 2, explanation: 'When current exceeds the limit, the electromagnet becomes strong enough to pull the armature and close the trip circuit.' },
-                    { id: 3, text: 'What does a Buchholz relay protect?', options: ['Transmission lines', 'Induction motors', 'Power Transformers', 'Generators'], correctAnswer: 2, explanation: 'It is a gas-actuated relay installed in oil-filled transformers to detect internal faults.' },
-                    { id: 4, text: 'A "Differential Relay" operates when there is a difference in:', options: ['Voltage and Power', 'Temperature inside and outside', 'Current entering and leaving the protected zone', 'Frequency and Time'], correctAnswer: 2, explanation: 'It compares input and output current. If they don\'t match, it means current is leaking (a fault).' },
-                    { id: 5, text: 'In the context of electrical protection, what is a "Fault"?', options: ['A mistake by the operator', 'An abnormal condition causing high current or low voltage', 'A normal power shutdown', 'A drop in temperature'], correctAnswer: 1, explanation: 'Short circuits, earth leaks, and lightning strikes are all electrical faults.' },
-                    { id: 6, text: 'What is the Arithmetic Mean of the data set: 2, 4, 6, 8, 10?', options: ['5', '6', '8', '30'], correctAnswer: 1, explanation: 'Sum of values (30) divided by number of values (5) = 6.' },
-                    { id: 7, text: 'Which measure of central tendency is defined as the value that occurs most frequently in a dataset?', options: ['Mean', 'Median', 'Mode', 'Variance'], correctAnswer: 2, explanation: 'The mode is the most common or repeated number.' },
-                    { id: 8, text: 'If a dataset has two different values that appear with the highest frequency, the dataset is called:', options: ['Unimodal', 'Bimodal', 'Multimodal', 'Non-modal'], correctAnswer: 1, explanation: 'Bimodal means having exactly two modes.' },
-                    { id: 9, text: 'Which measure of central tendency is the middle value when the data is arranged in ascending order?', options: ['Mean', 'Mode', 'Median', 'Standard Deviation'], correctAnswer: 2, explanation: 'The median cuts the dataset exactly in half.' },
-                    { id: 10, text: 'What is the median of this dataset: 3, 1, 9, 7, 5?', options: ['9', '5', '7', '1'], correctAnswer: 1, explanation: 'First, sort the data: 1, 3, 5, 7, 9. The middle number is 5.' },
-                    { id: 11, text: 'For a perfectly symmetrical distribution (like a normal bell curve), the relationship between Mean, Median, and Mode is:', options: ['Mean > Median > Mode', 'Mean = Median = Mode', 'Mode > Median > Mean', 'They are unrelated'], correctAnswer: 1, explanation: 'In a perfectly symmetrical curve, all three measures of central tendency fall exactly in the center.' },
-                    { id: 12, text: 'If an extreme outlier (a very large number) is added to a dataset, which measure is affected the most?', options: ['Median', 'Mode', 'Mean', 'None'], correctAnswer: 2, explanation: 'The mean uses all values in its calculation, so one massive outlier will pull the average up drastically. Median and Mode resist outliers.' },
-                    { id: 13, text: 'For a grouped frequency distribution, what does "f" represent in the mean formula (Σfx / Σf)?', options: ['Class mid-point', 'Frequency of the class', 'Lower limit', 'Upper limit'], correctAnswer: 1, explanation: 'f stands for the frequency (number of observations) in that specific class interval.' },
-                    { id: 14, text: 'For a grouped frequency distribution, what does "x" represent in the mean formula (Σfx / Σf)?', options: ['Total sum', 'Frequency', 'Mid-point of the class interval', 'Class width'], correctAnswer: 2, explanation: 'Because we don\'t know the exact data points inside a group (e.g., 10-20), we use the mid-point (15) to represent x.' },
-                    { id: 15, text: 'The empirical relationship between Mean, Median, and Mode for a moderately skewed distribution is:', options: ['Mode = 3 Median - 2 Mean', 'Mean = 3 Mode - 2 Median', 'Median = 3 Mean - 2 Mode', 'Mode = Mean + Median'], correctAnswer: 0, explanation: 'This is Karl Pearson\'s famous empirical formula.' },
-                    { id: 16, text: 'What is the main limitation of using the Mode?', options: ['It is hard to calculate', 'A dataset might not have a mode, or might have several', 'It is affected by extreme outliers', 'It can only be used for continuous data'], correctAnswer: 1, explanation: 'If all numbers appear exactly once, there is no mode. If many numbers appear twice, there are too many modes to be useful.' },
-                    { id: 17, text: 'A fuse provides protection primarily against:', options: ['Under voltage', 'Over current (short circuits)', 'Lightning', 'Frequency drops'], correctAnswer: 1, explanation: 'Fuses melt when the current exceeds their rated capacity.' },
-                    { id: 18, text: 'Which electrical protection device is designed specifically to protect humans from fatal electric shock by detecting leakage to ground?', options: ['MCB', 'RCCB (Residual Current Circuit Breaker)', 'Fuse', 'Isolator'], correctAnswer: 1, explanation: 'RCCBs/ELCBs sense if the current going out (Live) doesn\'t match the current coming back (Neutral), meaning it is leaking through a person or the earth.' },
-                    { id: 19, text: 'What is the formula for the Mid-point (x) of a class interval (e.g., 20 - 30)?', options: ['Upper limit - Lower limit', '(Lower limit + Upper limit) / 2', 'Lower limit * Upper limit', 'Upper limit / Lower limit'], correctAnswer: 1, explanation: 'The mid-point is the exact average of the class boundaries. (20+30)/2 = 25.' },
-                    { id: 20, text: 'If the Mean of a dataset is 25 and the Median is 25, what is the most likely value of the Mode?', options: ['0', '50', '25', 'Cannot be determined'], correctAnswer: 2, explanation: 'If Mean and Median are equal, the distribution is symmetrical, so the Mode must also be 25.' }
-                ]
-            },
-            'phase1-d10': {
-                title: 'Day 10: Math (Calculus Apps) & PMS (Life Cycle)',
-                questions: [
-                    { id: 1, text: 'Geometrically, what does the derivative (dy/dx) of a function f(x) at a specific point represent?', options: ['The area under the curve', 'The y-intercept', 'The slope of the tangent line to the curve at that point', 'The maximum value of the function'], correctAnswer: 2, explanation: 'The derivative gives the instantaneous rate of change, which is the slope of the tangent.' },
-                    { id: 2, text: 'If dy/dx = 0 at a point, what do we know about the tangent line at that point?', options: ['It is vertical', 'It is horizontal (slope is zero)', 'It does not exist', 'It has a slope of 1'], correctAnswer: 1, explanation: 'A slope of zero means the line is perfectly flat (horizontal).' },
-                    { id: 3, text: 'To find the maximum or minimum value of a function y = f(x), what is the first step?', options: ['Set x = 0', 'Set y = 0', 'Find dy/dx and set it to 0', 'Integrate the function'], correctAnswer: 2, explanation: 'Maxima and minima occur at "turning points" where the curve is flat (slope = 0).' },
-                    { id: 4, text: 'After finding the points where dy/dx = 0, how do you determine if a point is a MAXIMUM?', options: ['The second derivative (d²y/dx²) is POSITIVE', 'The second derivative (d²y/dx²) is NEGATIVE', 'The second derivative is ZERO', 'The first derivative is NEGATIVE'], correctAnswer: 1, explanation: 'If the second derivative is negative, the curve is concave down (like a frown), indicating a maximum peak.' },
-                    { id: 5, text: 'After finding the points where dy/dx = 0, how do you determine if a point is a MINIMUM?', options: ['The second derivative (d²y/dx²) is POSITIVE', 'The second derivative (d²y/dx²) is NEGATIVE', 'The second derivative is ZERO', 'The first derivative is POSITIVE'], correctAnswer: 0, explanation: 'If the second derivative is positive, the curve is concave up (like a smile), indicating a minimum valley.' },
-                    { id: 6, text: 'If distance (s) is a function of time (t), what does the first derivative ds/dt represent?', options: ['Acceleration', 'Jerk', 'Velocity', 'Position'], correctAnswer: 2, explanation: 'The rate of change of distance with respect to time is Velocity.' },
-                    { id: 7, text: 'If velocity (v) is a function of time (t), what does the derivative dv/dt represent?', options: ['Distance', 'Speed', 'Acceleration', 'Time'], correctAnswer: 2, explanation: 'The rate of change of velocity with respect to time is Acceleration.' },
-                    { id: 8, text: 'Therefore, Acceleration is the ____________ derivative of Distance (s) with respect to time (t).', options: ['First', 'Second', 'Third', 'Zero'], correctAnswer: 1, explanation: 'a = dv/dt, and since v = ds/dt, acceleration is d²s/dt².' },
-                    { id: 9, text: 'The equation of the tangent line to the curve y = f(x) at point (x1, y1) uses the slope m. How do we find m?', options: ['m = y1/x1', 'm = dy/dx evaluated at x = x1', 'm = f(x1)', 'm = x1 * y1'], correctAnswer: 1, explanation: 'You take the derivative of the curve\'s equation and plug in the x-coordinate of the point.' },
-                    { id: 10, text: 'If the slope of a tangent line is m, what is the slope of the Normal line at that same point?', options: ['m', '-m', '1/m', '-1/m'], correctAnswer: 3, explanation: 'The normal is perpendicular to the tangent, so its slope is the negative reciprocal (-1/m).' },
-                    { id: 11, text: 'What is the correct sequence of the standard Project Life Cycle?', options: ['Planning -> Executing -> Closing', 'Initiating -> Planning -> Executing -> Closing', 'Executing -> Planning -> Initiating', 'Initiating -> Executing -> Closing'], correctAnswer: 1, explanation: 'The 4 main phases are Initiating, Planning, Executing (which includes monitoring), and Closing.' },
-                    { id: 12, text: 'In which phase of the project life cycle is the "Project Charter" created?', options: ['Initiating', 'Planning', 'Executing', 'Closing'], correctAnswer: 0, explanation: 'The Charter officially authorizes the project and is created at the very beginning (Initiation).' },
-                    { id: 13, text: 'During which phase is the Work Breakdown Structure (WBS) created?', options: ['Initiating', 'Planning', 'Executing', 'Closing'], correctAnswer: 1, explanation: 'Breaking down the work is a core part of the detailed Planning phase.' },
-                    { id: 14, text: 'In which phase of the project life cycle does the actual "work" or construction happen, consuming the most budget and resources?', options: ['Initiating', 'Planning', 'Executing', 'Closing'], correctAnswer: 2, explanation: 'Execution is where the team actually builds the deliverable (writes code, pours concrete, etc.).' },
-                    { id: 15, text: 'What is the primary activity during the "Closing" phase of a project?', options: ['Creating the budget', 'Handing over the final deliverable and releasing the team', 'Buying raw materials', 'Defining the scope'], correctAnswer: 1, explanation: 'Closing involves final sign-offs, handing the product to the customer, and archiving documents.' },
-                    { id: 16, text: 'What is a "Milestone" in project management?', options: ['A heavy stone used in construction', 'A significant point or event in the project timeline', 'A 1-mile long road', 'A penalty for being late'], correctAnswer: 1, explanation: 'Milestones (like "Phase 1 Complete" or "Server Deployed") have zero duration; they just mark achievements.' },
-                    { id: 17, text: 'During the Execution phase, a critical process happens simultaneously to ensure the project stays on track. What is it?', options: ['Initiating', 'Monitoring & Controlling', 'Closing', 'Brainstorming'], correctAnswer: 1, explanation: 'While the team executes, the PM monitors progress to control scope, time, and cost.' },
-                    { id: 18, text: 'What is a "Feasibility Study"?', options: ['A study to see if the team is tired', 'An assessment of whether the project is technically, financially, and legally possible', 'A review of past projects', 'A marketing campaign'], correctAnswer: 1, explanation: 'Feasibility is done during Initiation to decide if the project is actually worth doing.' },
-                    { id: 19, text: 'What document defines what is INCLUDED in the project and, importantly, what is EXCLUDED?', options: ['Risk Register', 'Project Schedule', 'Scope Statement', 'Budget Plan'], correctAnswer: 2, explanation: 'The Scope Statement strictly defines the boundaries of the project to prevent Scope Creep.' },
-                    { id: 20, text: 'A post-project review (or "Lessons Learned" meeting) happens during which phase?', options: ['Initiating', 'Planning', 'Executing', 'Closing'], correctAnswer: 3, explanation: 'Before the team is disbanded in the Closing phase, they meet to document what went right and wrong.' }
-                ]
-            },
-            'phase1-d11': {
-                title: 'Day 11: FEEE (Transformers) & IT (Cloud/IoT)',
-                questions: [
-                    { id: 1, text: 'What is the main function of a Transformer?', options: ['To convert AC to DC', 'To step up or step down AC voltage', 'To generate electrical power', 'To store electrical energy'], correctAnswer: 1, explanation: 'Transformers change voltage levels in AC circuits while keeping power and frequency constant.' },
-                    { id: 2, text: 'Can a transformer operate on Direct Current (DC)?', options: ['Yes, perfectly', 'No, it only works on AC', 'Only at low voltages', 'Only if it is a step-up transformer'], correctAnswer: 1, explanation: 'Transformers rely on electromagnetic induction, which requires a constantly changing magnetic field provided by AC.' },
-                    { id: 3, text: 'If a transformer has MORE turns of wire on the secondary coil than the primary coil, it is a:', options: ['Step-down transformer', 'Step-up transformer', 'Isolation transformer', 'Current transformer'], correctAnswer: 1, explanation: 'More turns on the secondary side means the output voltage is stepped UP (higher than input).' },
-                    { id: 4, text: 'According to the principle of a transformer, what remains perfectly constant from the primary side to the secondary side (assuming an ideal transformer)?', options: ['Voltage', 'Current', 'Power (and Frequency)', 'Resistance'], correctAnswer: 2, explanation: 'Power in = Power out. If voltage goes up, current must go down to keep power constant.' },
-                    { id: 5, text: 'The core of a transformer is laminated (made of thin stacked sheets) rather than a solid block of iron. Why?', options: ['To make it lighter', 'To save iron', 'To reduce Eddy Current losses', 'To increase resistance'], correctAnswer: 2, explanation: 'Laminations break the path of swirling eddy currents in the core, reducing heat and energy loss.' },
-                    { id: 6, text: 'What does "Cloud Computing" refer to?', options: ['Computers that fly', 'Delivering computing services (servers, storage, databases) over the Internet', 'Weather forecasting technology', 'A localized hard drive'], correctAnswer: 1, explanation: 'Instead of owning physical servers, you rent access to them over the internet ("the cloud").' },
-                    { id: 7, text: 'Which of the following is an example of Cloud Storage?', options: ['A USB Flash Drive', 'Google Drive', 'A CD-ROM', 'RAM'], correctAnswer: 1, explanation: 'Google Drive stores your files on Google\'s remote servers, accessible via the internet.' },
-                    { id: 8, text: 'What does SaaS stand for in cloud computing?', options: ['Storage as a Service', 'Security as a Service', 'Software as a Service', 'System as a Service'], correctAnswer: 2, explanation: 'SaaS delivers software applications over the internet on a subscription basis (like Netflix or Gmail).' },
-                    { id: 9, text: 'What does IoT stand for?', options: ['Internet of Things', 'Intranet of Technology', 'Internal Online Transmission', 'Input Output Terminal'], correctAnswer: 0, explanation: 'IoT refers to the network of physical objects (things) embedded with sensors that connect to the internet.' },
-                    { id: 10, text: 'Which of the following is an example of an IoT device?', options: ['A standard wooden chair', 'A smart thermostat (like Nest) that you control with your phone', 'A piece of paper', 'A basic calculator'], correctAnswer: 1, explanation: 'Because the thermostat has sensors and connects to the internet to share data, it is an IoT device.' },
-                    { id: 11, text: 'In a transformer, the winding connected to the power supply is called the:', options: ['Secondary winding', 'Primary winding', 'High voltage winding', 'Low voltage winding'], correctAnswer: 1, explanation: 'Input is Primary. Output is Secondary.' },
-                    { id: 12, text: 'What is the purpose of the Transformer Oil inside large transformers?', options: ['To lubricate moving parts', 'To act as a fuel', 'For insulation and cooling', 'To prevent rust'], correctAnswer: 2, explanation: 'Transformers have no moving parts! The oil insulates the coils and carries away the massive heat generated.' },
-                    { id: 13, text: 'A Step-Down transformer reduces Voltage. What happens to the Current?', options: ['It decreases', 'It remains the same', 'It increases', 'It becomes zero'], correctAnswer: 2, explanation: 'Because Power (V*I) remains constant, if Voltage drops, Current must increase proportionally.' },
-                    { id: 14, text: 'What is the "Transformation Ratio" (K)?', options: ['Primary Voltage / Secondary Voltage', 'Secondary Voltage / Primary Voltage', 'Primary Current / Secondary Current', 'Resistance / Voltage'], correctAnswer: 1, explanation: 'K = V2/V1 = N2/N1 = I1/I2. It tells you how much the voltage is scaled.' },
-                    { id: 15, text: 'Which cloud computing model provides virtualized computing resources (like raw servers and storage) over the internet?', options: ['SaaS', 'PaaS (Platform as a Service)', 'IaaS (Infrastructure as a Service)', 'DaaS'], correctAnswer: 2, explanation: 'IaaS gives you the raw infrastructure (like renting a blank computer in the cloud).' },
-                    { id: 16, text: 'What is a major advantage of Cloud Computing for a startup company?', options: ['They have to buy expensive servers', 'They don\'t need internet access', 'Scalability (pay only for what you use without buying physical hardware)', 'It is completely unhackable'], correctAnswer: 2, explanation: 'Startups can scale their cloud usage up or down instantly as they grow, avoiding huge upfront costs.' },
-                    { id: 17, text: 'Sensors, Connectivity, Data Processing, and User Interface are the four core components of what technology?', options: ['A transformer', 'An IoT system', 'A spreadsheet', 'A database'], correctAnswer: 1, explanation: 'An IoT device senses data, connects to the internet, processes it, and shows it to the user.' },
-                    { id: 18, text: 'In the context of IoT, what does a "Sensor" do?', options: ['Executes an action (like turning on a motor)', 'Stores data permanently', 'Collects data from the physical environment (like temperature or motion)', 'Provides internet access'], correctAnswer: 2, explanation: 'Sensors detect physical changes. (Actuators perform physical actions).' },
-                    { id: 19, text: 'What is an "Actuator" in an IoT system?', options: ['A device that measures temperature', 'A device that translates an electrical signal into a physical action (like opening a valve)', 'A cloud server', 'A router'], correctAnswer: 1, explanation: 'If a sensor is the "eyes", the actuator is the "hands" of an IoT system.' },
-                    { id: 20, text: 'Why are losses in a transformer (like copper and iron losses) inevitable?', options: ['Because engineers are careless', 'Because wires have electrical resistance and the core has magnetic resistance', 'Because they run on DC', 'Because of friction from moving parts'], correctAnswer: 1, explanation: 'Copper wires always have some resistance (I²R heat loss), and the iron core requires energy to be magnetized.' }
-                ]
-            }
-        };
-
-        // --- LOCAL BROWSER STORAGE (LOCALSTORAGE) ---
-        const saveToLocal = (key, data) => {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-            } catch (e) { console.error("Local storage saving error:", e); }
-        };
-
-        const loadFromLocal = (key) => {
-            try {
-                const item = localStorage.getItem(key);
-                return item ? JSON.parse(item) : null;
-            } catch (e) { return null; }
-        };
-
-        // --- MAIN APP COMPONENT ---
         function App() {
             const [activeTab, setActiveTab] = useState('overview');
-            const [user, setUser] = useState(null);
-            const [firebaseInstance, setFirebaseInstance] = useState(null);
-            
-            // Core Data
-            const [completedTasks, setCompletedTasks] = useState([]);
-            const [quizStates, setQuizStates] = useState({});
-            
-            // Modal state
-            const [activeQuizId, setActiveQuizId] = useState(null);
+            const [completedTasks, setCompletedTasks] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('dcet_completed_tasks_v2');
+                    return saved ? JSON.parse(saved) : [];
+                } catch(e) { return []; }
+            });
 
-            // Connect to Cloud Database (with LocalStorage fallback)
+            const [quizModal, setQuizModal] = useState({ isOpen: false, dayId: null });
+            const [quizAnswers, setQuizAnswers] = useState({});
+            const [quizSubmitted, setQuizSubmitted] = useState(false);
+
             useEffect(() => {
-                let unsubscribeSnapshot;
-                let unsubscribeAuth;
+                try {
+                    localStorage.setItem('dcet_completed_tasks_v2', JSON.stringify(completedTasks));
+                } catch(e) {}
+            }, [completedTasks]);
 
-                const initFirebase = async () => {
-                    try {
-                        if (typeof __firebase_config !== 'undefined') {
-                            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
-                            const { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
-                            const { getFirestore, doc, setDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
-
-                            const firebaseConfig = JSON.parse(__firebase_config);
-                            const app = initializeApp(firebaseConfig);
-                            const auth = getAuth(app);
-                            const db = getFirestore(app);
-                            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-                            setFirebaseInstance({ db, auth, appId, doc, setDoc });
-
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                await signInWithCustomToken(auth, __initial_auth_token);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
-
-                            unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-                                setUser(currentUser);
-                                if (currentUser) {
-                                    const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'progress', 'tasks_v2');
-                                    unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
-                                        if (docSnap.exists()) {
-                                            const data = docSnap.data();
-                                            setCompletedTasks(data.completedIds || []);
-                                            setQuizStates(data.quizStates || {});
-                                        }
-                                    }, (error) => console.error("Snapshot error:", error));
-                                }
-                            });
-                        } else {
-                            throw new Error("Offline Mode");
-                        }
-                    } catch (err) {
-                        console.log("Running offline. Loading saved data from local browser memory...");
-                        const savedTasks = loadFromLocal('dcet_tasks');
-                        const savedQuizzes = loadFromLocal('dcet_quizzes');
-                        if (savedTasks) setCompletedTasks(savedTasks);
-                        if (savedQuizzes) setQuizStates(savedQuizzes);
-                    }
-                };
-
-                initFirebase();
-
-                return () => {
-                    if (unsubscribeAuth) unsubscribeAuth();
-                    if (unsubscribeSnapshot) unsubscribeSnapshot();
-                };
-            }, []);
-
-            // Checkmark logic
-            const toggleTask = async (taskId) => {
-                let newTasks;
-                if (completedTasks.includes(taskId)) {
-                    newTasks = completedTasks.filter(id => id !== taskId);
-                } else {
-                    newTasks = [...completedTasks, taskId];
-                }
-                setCompletedTasks(newTasks);
-                saveToLocal('dcet_tasks', newTasks);
-                
-                if (firebaseInstance && user) {
-                    try {
-                        const { db, appId, doc, setDoc } = firebaseInstance;
-                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tasks_v2');
-                        await setDoc(docRef, { completedIds: newTasks }, { merge: true });
-                    } catch(err) { }
-                }
-            };
-
-            // Quiz logic
-            const openQuiz = (quizId) => setActiveQuizId(quizId);
-            const closeQuiz = () => setActiveQuizId(null);
-
-            const handleAnswerSelect = async (questionId, optionIndex) => {
-                const currentQuizState = quizStates[activeQuizId] || { answers: {}, submitted: false };
-                if (!currentQuizState.submitted) {
-                    const newAnswers = { ...currentQuizState.answers, [questionId]: optionIndex };
-                    const newQuizStates = { ...quizStates, [activeQuizId]: { ...currentQuizState, answers: newAnswers } };
-                    setQuizStates(newQuizStates); 
-                    saveToLocal('dcet_quizzes', newQuizStates);
-
-                    if (firebaseInstance && user) {
-                        try {
-                            const { db, appId, doc, setDoc } = firebaseInstance;
-                            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tasks_v2');
-                            await setDoc(docRef, { quizStates: newQuizStates }, { merge: true });
-                        } catch(err) { }
-                    }
-                }
-            };
-
-            const submitQuiz = async () => {
-                const currentQuizState = quizStates[activeQuizId] || { answers: {}, submitted: false };
-                const newQuizStates = { ...quizStates, [activeQuizId]: { ...currentQuizState, submitted: true } };
-                setQuizStates(newQuizStates);
-                saveToLocal('dcet_quizzes', newQuizStates);
-
-                if (firebaseInstance && user) {
-                    try {
-                        const { db, appId, doc, setDoc } = firebaseInstance;
-                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'progress', 'tasks_v2');
-                        await setDoc(docRef, { quizStates: newQuizStates }, { merge: true });
-                    } catch(err) { }
-                }
+            const toggleTask = (taskId) => {
+                setCompletedTasks(prev => 
+                    prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+                );
             };
 
             const calculateProgress = () => {
-                const totalTasks = PHASES.reduce((acc, phase) => acc + phase.days.reduce((dayAcc, day) => dayAcc + day.tasks.length, 0), 0);
-                if (totalTasks === 0) return 0;
-                return Math.round((completedTasks.length / totalTasks) * 100) || 0;
+                let total = 0;
+                PHASES.forEach(p => p.days.forEach(d => total += d.tasks.length));
+                return Math.round((completedTasks.length / total) * 100) || 0;
             };
 
-            // Quiz Modal Render
-            const renderQuizModal = () => {
-                if (!activeQuizId) return null;
-                const quizData = QUIZ_DATABASE[activeQuizId];
+            const openQuiz = (dayId) => {
+                setQuizModal({ isOpen: true, dayId });
+                setQuizAnswers({});
+                setQuizSubmitted(false);
+            };
 
-                if (!quizData) {
-                    return (
-                        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative">
-                                <button onClick={closeQuiz} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
-                                    <XIcon size={24} />
-                                </button>
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">Quiz Coming Soon!</h3>
-                                <p className="text-slate-600">The MCQs for this day have not been generated yet. Keep crushing the current days!</p>
-                                <button onClick={closeQuiz} className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
-                                    Close
-                                </button>
-                            </div>
+            const handleQuizAnswer = (qId, optionIdx) => {
+                if (!quizSubmitted) {
+                    setQuizAnswers(prev => ({...prev, [qId]: optionIdx}));
+                }
+            };
+
+            // Safety check for the database
+            if (!PHASES || !QUIZ_DATABASE) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="bg-white p-8 rounded-xl shadow-md border border-red-200 text-center">
+                            <h2 className="text-2xl font-bold text-red-600 mb-2">Database Missing</h2>
+                            <p>Please ensure <code>tracker_data.js</code> is saved in the same folder.</p>
                         </div>
-                    );
-                }
+                    </div>
+                );
+            }
 
-                const currentQuizState = quizStates[activeQuizId] || { answers: {}, submitted: false };
-                const userAnswers = currentQuizState.answers;
-                const quizSubmitted = currentQuizState.submitted;
-
-                let score = 0;
-                if (quizSubmitted) {
-                    quizData.questions.forEach(q => { if (userAnswers[q.id] === q.correctAnswer) score++; });
-                }
+            const renderQuizModal = () => {
+                if (!quizModal.isOpen || !quizModal.dayId || !QUIZ_DATABASE[quizModal.dayId]) return null;
+                
+                const quizData = QUIZ_DATABASE[quizModal.dayId];
+                const totalQ = quizData.questions.length;
+                const score = quizSubmitted ? quizData.questions.filter(q => quizAnswers[q.id] === q.correctAnswer).length : 0;
 
                 return (
-                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-                        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
-                            <div className="p-4 sm:p-6 border-b border-slate-200 flex justify-between items-center bg-indigo-50 rounded-t-2xl">
-                                <div>
-                                    <h3 className="text-xl font-bold text-indigo-900">{quizData.title}</h3>
-                                    {quizSubmitted && (
-                                        <p className={`text-sm font-bold mt-1 ${score > (quizData.questions.length/2) ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                            Final Score: {score} / {quizData.questions.length}
-                                        </p>
-                                    )}
-                                </div>
-                                <button onClick={closeQuiz} className="text-indigo-400 hover:text-indigo-700 transition">
-                                    <XIcon size={24} />
+                    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-slate-50 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200">
+                            <div className="flex justify-between items-center p-5 border-b bg-white border-slate-200 shrink-0">
+                                <h2 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                                    <ZapIcon className="text-amber-500 w-6 h-6" />
+                                    {quizData.title}
+                                </h2>
+                                <button onClick={() => setQuizModal({ isOpen: false, dayId: null })} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors">
+                                    <XIcon className="w-5 h-5" />
                                 </button>
                             </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+                                {quizSubmitted && (
+                                    <div className={`p-6 rounded-xl border-2 text-center relative overflow-hidden ${score >= totalQ * 0.7 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
+                                        <div className="text-4xl font-black mb-1">{score} / {totalQ}</div>
+                                        <div className="font-semibold">{score >= totalQ * 0.7 ? 'Great job! You\'re on track.' : 'Review the concepts and try again.'}</div>
+                                    </div>
+                                )}
 
-                            <div className="overflow-y-auto p-4 sm:p-6 space-y-8">
-                                {quizData.questions.map((q, qIndex) => (
-                                    <div key={q.id} className="space-y-3">
-                                        <p className="font-semibold text-slate-800">
-                                            <span className="text-indigo-600 mr-2">{qIndex + 1}.</span>
-                                            {q.text}
-                                        </p>
-                                        <div className="space-y-2 pl-6">
-                                            {q.options.map((option, optIdx) => {
-                                                const isSelected = userAnswers[q.id] === optIdx;
-                                                const isCorrect = optIdx === q.correctAnswer;
-                                                let optionStyle = "border-slate-200 hover:border-indigo-300 text-slate-700 bg-white";
+                                {quizData.questions.map((q, idx) => (
+                                    <div key={q.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative">
+                                        <div className="absolute -left-2 -top-2 w-6 h-6 bg-slate-800 text-white text-xs font-bold flex items-center justify-center rounded shadow-sm">{idx + 1}</div>
+                                        <p className="font-bold text-slate-800 mb-4 ml-2">{q.text}</p>
+                                        <div className="space-y-2">
+                                            {q.options.map((opt, oIdx) => {
+                                                const isSelected = quizAnswers[q.id] === oIdx;
+                                                const isCorrect = oIdx === q.correctAnswer;
+                                                let btnClass = "border-slate-200 text-slate-600 hover:bg-slate-50";
                                                 
                                                 if (quizSubmitted) {
-                                                    if (isCorrect) optionStyle = "border-emerald-500 bg-emerald-50 text-emerald-800";
-                                                    else if (isSelected && !isCorrect) optionStyle = "border-red-400 bg-red-50 text-red-800";
-                                                    else optionStyle = "border-slate-200 opacity-50 bg-slate-50";
+                                                    if (isCorrect) btnClass = "border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-500";
+                                                    else if (isSelected && !isCorrect) btnClass = "border-rose-300 bg-rose-50 text-rose-800";
+                                                    else btnClass = "border-slate-100 opacity-50";
                                                 } else if (isSelected) {
-                                                    optionStyle = "border-indigo-500 bg-indigo-50 text-indigo-800 ring-1 ring-indigo-500";
+                                                    btnClass = "border-indigo-400 bg-indigo-50 text-indigo-800 font-semibold ring-1 ring-indigo-400";
                                                 }
 
                                                 return (
-                                                    <button
-                                                        key={optIdx}
-                                                        onClick={() => handleAnswerSelect(q.id, optIdx)}
-                                                        disabled={quizSubmitted}
-                                                        className={`w-full text-left p-3 rounded-lg border transition-all flex items-start gap-3 ${optionStyle}`}
-                                                    >
+                                                    <button key={oIdx} onClick={() => handleQuizAnswer(q.id, oIdx)} disabled={quizSubmitted}
+                                                        className={`w-full text-left p-3 rounded-lg border-2 transition-all flex items-start gap-3 ${btnClass}`}>
                                                         <div className="mt-0.5 flex-shrink-0">
-                                                            {quizSubmitted && isCorrect && <CheckIcon size={18} className="text-emerald-500" />}
-                                                            {quizSubmitted && isSelected && !isCorrect && <XCircleIcon size={18} className="text-red-500" />}
-                                                            {!quizSubmitted && <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-indigo-500' : 'border-slate-300'}`}>
-                                                                {isSelected && <div className="w-2 h-2 bg-indigo-500 rounded-full" />}
-                                                            </div>}
+                                                            {quizSubmitted && isCorrect && <CheckCircleIcon className="w-5 h-5 text-emerald-600" />}
+                                                            {quizSubmitted && isSelected && !isCorrect && <XCircleIcon className="w-5 h-5 text-rose-500" />}
+                                                            {!quizSubmitted && <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-indigo-500' : 'border-slate-300'}`}>{isSelected && <div className="w-2 h-2 rounded-full bg-indigo-500" />}</div>}
                                                         </div>
-                                                        <span className="text-sm">{option}</span>
+                                                        <span className="text-sm">{opt}</span>
                                                     </button>
                                                 );
                                             })}
                                         </div>
-                                        
                                         {quizSubmitted && (
-                                            <div className="pl-6 mt-2">
-                                                <div className={`p-3 rounded-lg text-sm ${userAnswers[q.id] === q.correctAnswer ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>
-                                                    <strong>Explanation:</strong> {q.explanation}
-                                                </div>
+                                            <div className={`mt-4 p-3 rounded-lg text-sm border ${quizAnswers[q.id] === q.correctAnswer ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50 border-slate-200'}`}>
+                                                <span className="font-bold block mb-1">Explanation:</span> {q.explanation}
                                             </div>
                                         )}
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="p-4 sm:p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end">
+                            <div className="p-5 border-t bg-white border-slate-200 shrink-0 flex justify-between items-center">
+                                <div className="text-sm font-medium text-slate-500">
+                                    {Object.keys(quizAnswers).length} of {totalQ} answered
+                                </div>
                                 {!quizSubmitted ? (
-                                    <button 
-                                        onClick={submitQuiz}
-                                        disabled={Object.keys(userAnswers).length !== quizData.questions.length}
-                                        className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                    >
-                                        Submit Answers
+                                    <button onClick={() => setQuizSubmitted(true)} disabled={Object.keys(quizAnswers).length !== totalQ}
+                                        className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-bold transition-colors">
+                                        Submit Quiz
                                     </button>
                                 ) : (
-                                    <button onClick={closeQuiz} className="bg-slate-800 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-slate-900 transition">
-                                        Close & Return
+                                    <button onClick={() => setQuizModal({ isOpen: false, dayId: null })} className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold transition-colors">
+                                        Close
                                     </button>
                                 )}
                             </div>
@@ -713,16 +202,21 @@
                             </div>
                         </div>
 
-                        <div className="flex overflow-x-auto border-t border-indigo-800 bg-indigo-950/50 backdrop-blur-sm" style={{scrollbarWidth: 'none'}}>
-                            <div className="max-w-4xl mx-auto flex w-full">
+                        <div className="flex overflow-x-auto border-t border-indigo-800 bg-indigo-950/50 backdrop-blur-sm items-center" style={{scrollbarWidth: 'none'}}>
+                            <div className="max-w-4xl mx-auto flex w-full items-center">
                                 <button onClick={() => setActiveTab('overview')} className={`flex-1 py-3 px-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === 'overview' ? 'border-emerald-400 text-emerald-300 bg-indigo-900/50' : 'border-transparent text-indigo-300 hover:text-white'}`}>
-                                    Overview & Routine
+                                    Overview
                                 </button>
                                 {PHASES.map(phase => (
                                     <button key={phase.id} onClick={() => setActiveTab(phase.id)} className={`flex-1 py-3 px-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === phase.id ? 'border-emerald-400 text-emerald-300 bg-indigo-900/50' : 'border-transparent text-indigo-300 hover:text-white'}`}>
                                         {phase.title.split(':')[0]}
                                     </button>
                                 ))}
+                                
+                                {/* LINK TO NEW PRACTICE UI */}
+                                <a href="practice.html" className="flex items-center justify-center px-3 py-1 my-2 mx-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold shadow-sm transition-all shrink-0 uppercase tracking-wider">
+                                    📝 Mastery
+                                </a>
                             </div>
                         </div>
                     </header>
@@ -750,29 +244,25 @@
                                         <ClockIcon className="text-indigo-500 w-5 h-5" />
                                         Daily Routine Habits
                                     </h2>
-                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm text-left">
-                                                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
-                                                    <tr>
-                                                        <th className="px-4 py-3 font-semibold">Time Block</th>
-                                                        <th className="px-4 py-3 font-semibold">Duration</th>
-                                                        <th className="px-4 py-3 font-semibold">Weekday (4.5h)</th>
-                                                        <th className="px-4 py-3 font-semibold">Weekend (7.5h)</th>
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                                <tr>
+                                                    <th className="px-4 py-3 font-semibold">Time Block</th>
+                                                    <th className="px-4 py-3 font-semibold">Weekday</th>
+                                                    <th className="px-4 py-3 font-semibold">Weekend</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {ROUTINES.map((routine, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50/50">
+                                                        <td className="px-4 py-3 font-medium text-slate-800">{routine.time}</td>
+                                                        <td className="px-4 py-3">{routine.weekday}</td>
+                                                        <td className="px-4 py-3">{routine.weekend}</td>
                                                     </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {ROUTINES.map((routine, idx) => (
-                                                        <tr key={idx} className="hover:bg-slate-50/50">
-                                                            <td className="px-4 py-3 font-medium text-slate-800">{routine.time}</td>
-                                                            <td className="px-4 py-3 text-slate-500">{routine.duration}</td>
-                                                            <td className="px-4 py-3">{routine.weekday}</td>
-                                                            <td className="px-4 py-3">{routine.weekend}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </section>
                             </div>
@@ -789,6 +279,7 @@
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                     {phase.days.map((day) => {
                                         const isAllChecked = day.tasks.length > 0 && day.tasks.every((_, i) => completedTasks.includes(`${phase.id}-d${day.day}-t${i}`));
+                                        const hasQuiz = !!QUIZ_DATABASE[`${phase.id}-d${day.day}`];
                                         return (
                                             <div key={day.day} className={`bg-white rounded-xl shadow-sm border p-5 transition-all duration-200 ${isAllChecked ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200 hover:border-indigo-300'}`}>
                                                 <div className="flex justify-between items-start mb-4">
@@ -796,55 +287,40 @@
                                                         <div className="font-bold text-lg text-slate-800">Day {day.day}</div>
                                                         <div className="text-sm text-slate-500">{day.date}</div>
                                                     </div>
-                                                    {isAllChecked && <CheckCircleIcon className="text-emerald-500 w-6 h-6" />}
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        {isAllChecked && <CheckCircleIcon className="text-emerald-500 w-6 h-6" />}
+                                                        {hasQuiz && (
+                                                            <button onClick={() => openQuiz(`${phase.id}-d${day.day}`)} className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 transition-colors uppercase">
+                                                                Daily Quiz
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-3">
                                                     {day.tasks.map((task, idx) => {
                                                         const taskId = `${phase.id}-d${day.day}-t${idx}`;
-                                                        const isChecked = completedTasks.includes(taskId);
-                                                        const hasQuiz = task.includes('MCQ') || task.includes('Sectional');
-                                                        const quizId = `${phase.id}-d${day.day}`;
-                                                        const isQuizSubmitted = quizStates[quizId]?.submitted;
-                                                        
                                                         return (
-                                                            <div key={taskId} className="flex items-start justify-between group">
-                                                                <label className={`flex items-start gap-3 cursor-pointer flex-1 ${isChecked ? 'opacity-60' : ''}`}>
-                                                                    <button onClick={(e) => { e.preventDefault(); toggleTask(taskId); }} className="mt-0.5 flex-shrink-0 focus:outline-none">
-                                                                        {isChecked ? <CheckSquareIcon className="w-5 h-5 text-emerald-500" /> : <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white group-hover:border-indigo-400 transition-colors" />}
-                                                                    </button>
-                                                                    <span className={`text-sm leading-tight pt-0.5 transition-all ${isChecked ? 'line-through text-slate-500' : 'text-slate-700 font-medium group-hover:text-indigo-900'}`}>{task}</span>
-                                                                </label>
-                                                                {hasQuiz && (
-                                                                    <button onClick={() => openQuiz(quizId)} className={`ml-2 p-1.5 rounded-md transition-colors shadow-sm flex-shrink-0 flex items-center gap-1 ${isQuizSubmitted ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'text-indigo-500 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-700'}`} title={isQuizSubmitted ? "Review Completed Quiz" : "Take Quiz"}>
-                                                                        {isQuizSubmitted ? <CheckCircleIcon size={16} /> : <BookOpenIcon size={16} />}
-                                                                        <span className="text-xs font-bold sm:hidden lg:inline">{isQuizSubmitted ? "Done" : "Quiz"}</span>
-                                                                    </button>
-                                                                )}
-                                                            </div>
+                                                            <label key={taskId} className="flex items-start gap-3 cursor-pointer group">
+                                                                <button onClick={(e) => { e.preventDefault(); toggleTask(taskId); }} className="mt-0.5 flex-shrink-0 focus:outline-none">
+                                                                    {completedTasks.includes(taskId) ? <CheckSquareIcon className="w-5 h-5 text-emerald-500" /> : <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white group-hover:border-indigo-400 transition-colors" />}
+                                                                </button>
+                                                                <span className={`text-sm leading-tight pt-0.5 transition-all ${completedTasks.includes(taskId) ? 'line-through text-slate-500' : 'text-slate-700 font-medium group-hover:text-indigo-900'}`}>{task}</span>
+                                                            </label>
                                                         );
                                                     })}
                                                 </div>
                                             </div>
-                                        )
+                                        );
                                     })}
                                 </div>
-                                {phase.id === 'phase3' && (
-                                    <div className="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
-                                        <h3 className="font-bold text-amber-900 mb-2 flex items-center gap-2"><AlertCircleIcon className="w-5 h-5 text-amber-600" />The "Why Did I Miss It?" Protocol</h3>
-                                        <ul className="space-y-2 text-sm text-amber-800">
-                                            <li><span className="font-bold text-red-600">Type A (Gap):</span> Forgot formula. <ChevronRightIcon className="inline w-3 h-3"/> Rote memorize immediately.</li>
-                                            <li><span className="font-bold text-yellow-600">Type B (Silly):</span> Calculation error. <ChevronRightIcon className="inline w-3 h-3"/> Slow down on algebra.</li>
-                                            <li><span className="font-bold text-blue-600">Type C (Read):</span> Missed keywords. <ChevronRightIcon className="inline w-3 h-3"/> Highlight keywords.</li>
-                                        </ul>
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </main>
                     
                     {renderQuizModal()}
-                    <div className="fixed bottom-0 w-full text-center py-3 bg-slate-100/80 backdrop-blur text-xs text-slate-500 border-t border-slate-200 z-10">
-                        All progress and test scores are permanently saved securely to your browser!
+                    
+                    <div className="fixed bottom-0 w-full text-center py-3 bg-slate-100/80 backdrop-blur text-[10px] text-slate-400 border-t border-slate-200 z-10 font-bold uppercase tracking-tighter">
+                        Securely Saving to Browser Memory
                     </div>
                 </div>
             );
