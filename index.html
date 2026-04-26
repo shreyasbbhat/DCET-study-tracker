@@ -74,8 +74,7 @@
                 fetchCloudData();
             }, []);
 
-            // --- 3. UPLOAD ENGINE (Call this when things change) ---
-            // --- 3. UPLOAD ENGINE (Upgraded with Alerts!) ---
+            // --- 3. UPLOAD ENGINE (The Ghost Catcher!) ---
             async function syncToCloud(latestData) {
                 if (!userEmail) return;
                 
@@ -83,12 +82,14 @@
                     const { data, error } = await supabase
                         .from('test_users')
                         .update({ progress: latestData })
-                        .eq('email', userEmail);
+                        .eq('email', userEmail)
+                        .select(); // <--- This forces Supabase to return the updated row
 
-                    // If Supabase blocks the save, pop up an alert!
                     if (error) {
-                        alert("SUPABASE BLOCKED THE SAVE! Error: " + error.message);
-                        console.error("Supabase Error details:", error);
+                        alert("SUPABASE ERROR: " + error.message);
+                    } else if (data.length === 0) {
+                        // THE GHOST CAUGHT! 
+                        alert(`GHOST BUG: Supabase cannot find this exact email in your database: "${userEmail}"`);
                     } else {
                         console.log("☁️ Successfully backed up to the cloud!");
                     }
