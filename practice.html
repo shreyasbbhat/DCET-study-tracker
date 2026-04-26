@@ -9,6 +9,7 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #334155; margin: 0; padding: 0; overflow: hidden; }
@@ -27,6 +28,11 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+
+        // --- SUPABASE SETUP ---
+        const supabaseUrl = 'https://pzqegtitfxhlmjspzfaj.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6cWVndGl0ZnhobG1qc3B6ZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzE5MDIsImV4cCI6MjA5MjcwNzkwMn0.kO-uzSMH4_cgxmyLGoNDzl6oGPAkz-Whc2cAh9TTaGc';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // --- ICONS ---
         const CalculatorIcon = ({ size=20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>;
@@ -912,6 +918,67 @@ const SUBJECT_DATA = {            // ================= MATHEMATICS =============
         };
 
         function App() {
+            const userEmail = localStorage.getItem('dcet_user');
+
+            // --- 2. DOWNLOAD PROGRESS FROM CLOUD ---
+            useEffect(() => {
+                if (!userEmail) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                async function fetchCloudData() {
+                    try {
+                        const { data, error } = await supabase
+                            .from('test_users')
+                            .select('progress')
+                            .eq('email', userEmail)
+                            .single();
+
+                        if (data && data.progress && data.progress.practice_v2) {
+                            setProgress(data.progress.practice_v2);
+                        }
+                    } catch (err) { console.error("Download failed:", err); }
+                }
+                fetchCloudData();
+            }, []);
+
+           
+            // --- 3. UPLOAD PROGRESS TO CLOUD (Ghost Catcher Version) ---
+            async function syncToCloud(latestPracticeData) {
+                if (!userEmail) return;
+                try {
+                    // 1. Get existing progress first
+                    const { data: existing, error: fetchError } = await supabase
+                        .from('test_users')
+                        .select('progress')
+                        .eq('email', userEmail)
+                        .single();
+
+                    const fullProgress = {
+                        ...(existing?.progress || {}),
+                        practice_v2: latestPracticeData
+                    };
+
+                    // 2. Push the combined data back
+                    const { data, error } = await supabase
+                        .from('test_users')
+                        .update({ progress: fullProgress })
+                        .eq('email', userEmail)
+                        .select(); // <--- This is the key to catching ghosts!
+
+                    if (error) {
+                        alert("SUPABASE ERROR: " + error.message);
+                    } else if (!data || data.length === 0) {
+                        // THE GHOST CAUGHT!
+                        alert(`GHOST BUG: I am trying to save to "${userEmail}" but that email doesn't exist in your Supabase table!`);
+                    } else {
+                        console.log("☁️ Practice progress synced!");
+                    }
+                } catch (err) { 
+                    console.error("Upload failed:", err); 
+                }
+            }
             const [selectedCategory, setSelectedCategory] = useState('math');
             const firstUnitKey = Object.keys(SUBJECT_DATA)[0] || '';
             const [selectedUnitId, setSelectedUnitId] = useState(firstUnitKey);
@@ -965,7 +1032,18 @@ const SUBJECT_DATA = {            // ================= MATHEMATICS =============
 
             const handleSubmitQuiz = () => {
                 setSubmitted(true);
-                saveProgress(selectedUnitId, answers, true);
+                
+                // 1. Update local state
+                const newProgress = {
+                    ...progress,
+                    [selectedUnitId]: { answers: answers, submitted: true }
+                };
+                setProgress(newProgress);
+                localStorage.setItem('dcet_practice_progress_v2', JSON.stringify(newProgress));
+                
+                // 2. TRIGGER CLOUD SAVE
+                syncToCloud(newProgress); 
+
                 const mainContent = document.getElementById('main-scroll-area');
                 if (mainContent) mainContent.scrollTo({ top: 0, behavior: 'smooth' });
             };
