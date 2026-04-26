@@ -40,7 +40,7 @@
             
             const userEmail = localStorage.getItem('dcet_user');
 
-            // --- 2. DOWNLOAD PROGRESS WHEN APP LOADS ---
+           // --- 2. DOWNLOAD PROGRESS WHEN APP LOADS ---
             useEffect(() => {
                 if (!userEmail) {
                     window.location.href = 'login.html'; 
@@ -59,14 +59,18 @@
                             if (data.progress.tasks) {
                                 // Load Combo Package (Tasks + Quizzes)
                                 setCompletedTasks(data.progress.tasks);
-                                setQuizHistory(data.progress.quizzes || {}); // <--- Updates the screen!
+                                setQuizHistory(data.progress.quizzes || {}); 
                                 localStorage.setItem('dcet_quiz_history', JSON.stringify(data.progress.quizzes || {}));
                             } else {
                                 // Fallback for old data format
                                 setCompletedTasks(data.progress);
                             }
+                        } else {
+                            // BRAND NEW USER: Force the screen to be completely empty
+                            setCompletedTasks([]);
+                            setQuizHistory({});
                         }
-                    } catch (err) {  // <--- This is the piece that went missing!
+                    } catch (err) {
                         console.error("Error fetching cloud data:", err);
                     }
                 }
@@ -74,22 +78,20 @@
                 fetchCloudData();
             }, []);
 
-            // --- 3. UPLOAD ENGINE (The Ghost Catcher!) ---
+            // --- 3. UPLOAD ENGINE (Pushes data to Supabase) ---
             async function syncToCloud(latestData) {
                 if (!userEmail) return;
-                
                 try {
                     const { data, error } = await supabase
                         .from('test_users')
                         .update({ progress: latestData })
                         .eq('email', userEmail)
-                        .select(); // <--- This forces Supabase to return the updated row
+                        .select(); // Forces Supabase to confirm the save
 
                     if (error) {
-                        alert("SUPABASE ERROR: " + error.message);
+                        console.error("SUPABASE ERROR: ", error.message);
                     } else if (data.length === 0) {
-                        // THE GHOST CAUGHT! 
-                        alert(`GHOST BUG: Supabase cannot find this exact email in your database: "${userEmail}"`);
+                        alert(`CRITICAL BUG: Supabase cannot find this exact email in your database: "${userEmail}". Please logout and register again.`);
                     } else {
                         console.log("☁️ Successfully backed up to the cloud!");
                     }
@@ -97,6 +99,7 @@
                     console.error("☁️ Failed to sync to cloud:", err);
                 }
             }
+
             const [activeTab, setActiveTab] = useState('overview');
             
             const [completedTasks, setCompletedTasks] = useState(() => {
@@ -120,27 +123,44 @@
                     localStorage.setItem('dcet_completed_tasks_v2', JSON.stringify(completedTasks));
                 } catch(e) {}
             }, [completedTasks]);
-            const handleLogout = () => {
+           const handleLogout = () => {
+                // Wipe EVERYTHING when you log out!
                 localStorage.removeItem('dcet_user');
+                localStorage.removeItem('dcet_completed_tasks_v2');
+                localStorage.removeItem('dcet_quiz_history');
                 window.location.href = 'login.html';
             };
 
             const toggleTask = (taskId) => {
-                setCompletedTasks(prev => {
-                    const newTasks = prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId];
-                    
-                    // ONLY sync to the cloud when a box is actively clicked!
+                // 1. Force it to be a clean array (prevents the crash!)
+                const currentTasks = Array.isArray(completedTasks) ? completedTasks : [];
+                
+                // 2. Create the updated list
+                const newTasks = currentTasks.includes(taskId) 
+                    ? currentTasks.filter(id => id !== taskId) 
+                    : [...currentTasks, taskId];
+                
+                // 3. Update the screen
+                setCompletedTasks(newTasks);
+                
+                // 4. Safely push to the cloud
+                try {
                     const history = JSON.parse(localStorage.getItem('dcet_quiz_history')) || {};
                     syncToCloud({ tasks: newTasks, quizzes: history });
-                    
-                    return newTasks;
-                });
+                } catch (e) {
+                    console.error("Cloud sync failed", e);
+                }
             };
 
             const calculateProgress = () => {
                 let total = 0;
-                PHASES.forEach(p => p.days.forEach(d => total += d.tasks.length));
-                return Math.round((completedTasks.length / total) * 100) || 0;
+                if (!window.PHASES) return 0; // Safety check
+                
+                window.PHASES.forEach(p => p.days.forEach(d => total += d.tasks.length));
+                
+                // Safely count the tasks to prevent math crashes
+                const safeTasks = Array.isArray(completedTasks) ? completedTasks : [];
+                return Math.round((safeTasks.length / total) * 100) || 0;
             };
 
             const openQuiz = (dayId) => {
