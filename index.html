@@ -51,25 +51,31 @@
                     try {
                         const { data, error } = await supabase
                             .from('test_users')
-                            .select('progress')
+                            .select('progress, name') // <--- Getting progress AND name!
                             .eq('email', userEmail)
                             .single();
 
-                        if (data && data.progress) {
-                            if (data.progress.tasks) {
-                                // Load Combo Package (Tasks + Quizzes)
-                                setCompletedTasks(data.progress.tasks);
-                                setQuizHistory(data.progress.quizzes || {}); 
-                                localStorage.setItem('dcet_quiz_history', JSON.stringify(data.progress.quizzes || {}));
+                        if (data) {
+                            // 1. Save the Name!
+                            if (data.name) setUserName(data.name);
+
+                            // 2. Load the Progress!
+                            if (data.progress) {
+                                if (data.progress.tasks) {
+                                    // Load Combo Package
+                                    setCompletedTasks(data.progress.tasks);
+                                    setQuizHistory(data.progress.quizzes || {}); 
+                                    localStorage.setItem('dcet_quiz_history', JSON.stringify(data.progress.quizzes || {}));
+                                } else {
+                                    // Fallback
+                                    setCompletedTasks(data.progress);
+                                }
                             } else {
-                                // Fallback for old data format
-                                setCompletedTasks(data.progress);
+                                // BRAND NEW USER
+                                setCompletedTasks([]);
+                                setQuizHistory({});
                             }
-                        } else {
-                            // BRAND NEW USER: Force the screen to be completely empty
-                            setCompletedTasks([]);
-                            setQuizHistory({});
-                        }
+                        } // <--- This was the missing bracket!
                     } catch (err) {
                         console.error("Error fetching cloud data:", err);
                     }
@@ -101,6 +107,7 @@
             }
 
             const [activeTab, setActiveTab] = useState('overview');
+            const [userName, setUserName] = useState(''); // <--- Added this to hold the name!
             
             const [completedTasks, setCompletedTasks] = useState(() => {
                 try {
@@ -336,7 +343,10 @@
                                         <TargetIcon className="text-indigo-300" />
                                         DCET 2026 Tracker
                                     </h1>
-                                    <p className="text-indigo-200 text-sm mt-1">CS Student Edition • Target: 100 Marks</p>
+                                    {/* The Welcome Message is dynamically inserted here! */}
+                                    <p className="text-indigo-200 text-sm mt-1">
+                                        Welcome back, <span className="font-bold text-white">{userName || 'Student'}</span>! • Target: 100 Marks
+                                    </p>
                                 </div>
                                 <div className="text-right hidden sm:block">
                                     <div className="text-sm text-indigo-200">Exam Date</div>
