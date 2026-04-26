@@ -75,15 +75,23 @@
             }, []);
 
             // --- 3. UPLOAD ENGINE (Call this when things change) ---
+            // --- 3. UPLOAD ENGINE (Upgraded with Alerts!) ---
             async function syncToCloud(latestData) {
                 if (!userEmail) return;
                 
                 try {
-                    await supabase
+                    const { data, error } = await supabase
                         .from('test_users')
                         .update({ progress: latestData })
                         .eq('email', userEmail);
-                    console.log("☁️ Successfully backed up to the cloud!");
+
+                    // If Supabase blocks the save, pop up an alert!
+                    if (error) {
+                        alert("SUPABASE BLOCKED THE SAVE! Error: " + error.message);
+                        console.error("Supabase Error details:", error);
+                    } else {
+                        console.log("☁️ Successfully backed up to the cloud!");
+                    }
                 } catch (err) {
                     console.error("☁️ Failed to sync to cloud:", err);
                 }
