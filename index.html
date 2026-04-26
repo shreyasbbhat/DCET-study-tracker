@@ -11,6 +11,7 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
     <div id="root"></div>
@@ -31,8 +32,64 @@
         const XIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
         const XCircleIcon = ({ className, size=24 }) => <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>;
 
-        function App() {
+           function App() {
+            // --- 1. SUPABASE CLOUD SETUP ---
+            const supabaseUrl = 'https://pzqegtitfxhlmjspzfaj.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6cWVndGl0ZnhobG1qc3B6ZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzE5MDIsImV4cCI6MjA5MjcwNzkwMn0.kO-uzSMH4_cgxmyLGoNDzl6oGPAkz-Whc2cAh9TTaGc';
+            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            
+            const userEmail = localStorage.getItem('dcet_user');
+
+            // --- 2. DOWNLOAD PROGRESS WHEN APP LOADS ---
+            useEffect(() => {
+                if (!userEmail) {
+                    window.location.href = 'login.html'; 
+                    return;
+                }
+
+                async function fetchCloudData() {
+                    try {
+                        const { data, error } = await supabase
+                            .from('test_users')
+                            .select('progress')
+                            .eq('email', userEmail)
+                            .single();
+
+                        if (data && data.progress) {
+                            if (data.progress.tasks) {
+                                // Load Combo Package (Tasks + Quizzes)
+                                setCompletedTasks(data.progress.tasks);
+                                setQuizHistory(data.progress.quizzes || {}); // <--- Updates the screen!
+                                localStorage.setItem('dcet_quiz_history', JSON.stringify(data.progress.quizzes || {}));
+                            } else {
+                                // Fallback for old data format
+                                setCompletedTasks(data.progress);
+                            }
+                        }
+                    } catch (err) {  // <--- This is the piece that went missing!
+                        console.error("Error fetching cloud data:", err);
+                    }
+                }
+                
+                fetchCloudData();
+            }, []);
+
+            // --- 3. UPLOAD ENGINE (Call this when things change) ---
+            async function syncToCloud(latestData) {
+                if (!userEmail) return;
+                
+                try {
+                    await supabase
+                        .from('test_users')
+                        .update({ progress: latestData })
+                        .eq('email', userEmail);
+                    console.log("☁️ Successfully backed up to the cloud!");
+                } catch (err) {
+                    console.error("☁️ Failed to sync to cloud:", err);
+                }
+            }
             const [activeTab, setActiveTab] = useState('overview');
+            
             const [completedTasks, setCompletedTasks] = useState(() => {
                 try {
                     const saved = localStorage.getItem('dcet_completed_tasks_v2');
@@ -40,15 +97,28 @@
                 } catch(e) { return []; }
             });
 
+            const [quizHistory, setQuizHistory] = useState(() => {
+                try { return JSON.parse(localStorage.getItem('dcet_quiz_history')) || {}; } 
+                catch(e) { return {}; }
+            });
+
             const [quizModal, setQuizModal] = useState({ isOpen: false, dayId: null });
             const [quizAnswers, setQuizAnswers] = useState({});
             const [quizSubmitted, setQuizSubmitted] = useState(false);
 
-            useEffect(() => {
+           useEffect(() => {
                 try {
                     localStorage.setItem('dcet_completed_tasks_v2', JSON.stringify(completedTasks));
+                    
+                    // Grab quiz history from memory and package it with the checkboxes!
+                    const history = JSON.parse(localStorage.getItem('dcet_quiz_history')) || {};
+                    syncToCloud({ tasks: completedTasks, quizzes: history });
                 } catch(e) {}
             }, [completedTasks]);
+            const handleLogout = () => {
+                localStorage.removeItem('dcet_user');
+                window.location.href = 'login.html';
+            };
 
             const toggleTask = (taskId) => {
                 setCompletedTasks(prev => 
@@ -64,14 +134,38 @@
 
             const openQuiz = (dayId) => {
                 setQuizModal({ isOpen: true, dayId });
-                setQuizAnswers({});
-                setQuizSubmitted(false);
+                
+                // 1. Check if we already took this quiz in the past
+                const history = JSON.parse(localStorage.getItem('dcet_quiz_history')) || {};
+                
+                if (history[dayId]) {
+                    // Load old answers!
+                    setQuizAnswers(history[dayId].answers);
+                    setQuizSubmitted(history[dayId].submitted);
+                } else {
+                    // Start fresh
+                    setQuizAnswers({});
+                    setQuizSubmitted(false);
+                }
             };
 
             const handleQuizAnswer = (qId, optionIdx) => {
                 if (!quizSubmitted) {
                     setQuizAnswers(prev => ({...prev, [qId]: optionIdx}));
                 }
+            };
+
+            const submitQuiz = () => {
+                setQuizSubmitted(true);
+                
+                // 2. Save the score locally
+                const history = JSON.parse(localStorage.getItem('dcet_quiz_history')) || {};
+                history[quizModal.dayId] = { answers: quizAnswers, submitted: true };
+                localStorage.setItem('dcet_quiz_history', JSON.stringify(history));
+                setQuizHistory(history); // <--- Updates the screen!
+                
+                // 3. Immediately push the new grade to the cloud!
+                syncToCloud({ tasks: completedTasks, quizzes: history });
             };
 
             // Safety check for the database
@@ -159,7 +253,7 @@
                                     {Object.keys(quizAnswers).length} of {totalQ} answered
                                 </div>
                                 {!quizSubmitted ? (
-                                    <button onClick={() => setQuizSubmitted(true)} disabled={Object.keys(quizAnswers).length !== totalQ}
+                                    <button onClick={submitQuiz} disabled={Object.keys(quizAnswers).length !== totalQ}
                                         className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-bold transition-colors">
                                         Submit Quiz
                                     </button>
@@ -176,6 +270,16 @@
 
             return (
                 <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-20">
+                 
+                    
+                    {/* LOGOUT BUTTON */}
+                    <div className="fixed top-4 right-4 z-50 hidden sm:block">
+                        <button onClick={handleLogout} className="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Logout
+                        </button>
+                    </div>
+
                     <header className="bg-indigo-900 text-white sticky top-0 z-20 shadow-md">
                         <div className="max-w-4xl mx-auto px-4 py-4">
                             <div className="flex justify-between items-center mb-4">
@@ -278,8 +382,18 @@
                                 </div>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                     {phase.days.map((day) => {
-                                        const isAllChecked = day.tasks.length > 0 && day.tasks.every((_, i) => completedTasks.includes(`${phase.id}-d${day.day}-t${i}`));
-                                        const hasQuiz = !!QUIZ_DATABASE[`${phase.id}-d${day.day}`];
+                                        const dayKey = `${phase.id}-d${day.day}`;
+                                        const hasQuiz = !!QUIZ_DATABASE[dayKey];
+                                        
+                                        // 1. Are all checkboxes ticked?
+                                        const areTasksDone = day.tasks.length > 0 && day.tasks.every((_, i) => completedTasks.includes(`${dayKey}-t${i}`));
+                                        
+                                        // 2. If it has a quiz, is it submitted? (If no quiz exists, it automatically passes)
+                                        const isQuizDone = hasQuiz ? (quizHistory[dayKey] && quizHistory[dayKey].submitted) : true;
+                                        
+                                        // 3. The box ONLY turns green if BOTH are true!
+                                        const isAllChecked = areTasksDone && isQuizDone;
+                                        
                                         return (
                                             <div key={day.day} className={`bg-white rounded-xl shadow-sm border p-5 transition-all duration-200 ${isAllChecked ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200 hover:border-indigo-300'}`}>
                                                 <div className="flex justify-between items-start mb-4">
@@ -320,7 +434,7 @@
                     {renderQuizModal()}
                     
                     <div className="fixed bottom-0 w-full text-center py-3 bg-slate-100/80 backdrop-blur text-[10px] text-slate-400 border-t border-slate-200 z-10 font-bold uppercase tracking-tighter">
-                        Securely Saving to Browser Memory
+                        ☁️ Securely Synced to Cloud Database
                     </div>
                 </div>
             );
