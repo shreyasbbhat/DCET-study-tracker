@@ -189,20 +189,40 @@
 
             const handleQuizAnswer = (qId, optionIdx) => {
                 if (!quizSubmitted) {
-                    setQuizAnswers(prev => ({...prev, [qId]: optionIdx}));
+                    const newAnswers = { ...quizAnswers, [qId]: optionIdx };
+                    setQuizAnswers(newAnswers);
+
+                    // 1. Save draft locally immediately
+                    const history = JSON.parse(localStorage.getItem('dcet_quiz_history')) || {};
+                    history[quizModal.dayId] = { answers: newAnswers, submitted: false };
+                    localStorage.setItem('dcet_quiz_history', JSON.stringify(history));
+                    setQuizHistory(history);
+
+                    // 2. Push draft to the cloud so you don't lose progress!
+                    syncToCloud({ tasks: completedTasks, quizzes: history });
                 }
+            };
+
+            const resetDailyQuiz = () => {
+                setQuizAnswers({});
+                setQuizSubmitted(false);
+                
+                const history = JSON.parse(localStorage.getItem('dcet_quiz_history')) || {};
+                history[quizModal.dayId] = { answers: {}, submitted: false };
+                localStorage.setItem('dcet_quiz_history', JSON.stringify(history));
+                setQuizHistory(history);
+                
+                syncToCloud({ tasks: completedTasks, quizzes: history });
             };
 
             const submitQuiz = () => {
                 setQuizSubmitted(true);
                 
-                // 2. Save the score locally
                 const history = JSON.parse(localStorage.getItem('dcet_quiz_history')) || {};
                 history[quizModal.dayId] = { answers: quizAnswers, submitted: true };
                 localStorage.setItem('dcet_quiz_history', JSON.stringify(history));
-                setQuizHistory(history); // <--- Updates the screen!
+                setQuizHistory(history); 
                 
-                // 3. Immediately push the new grade to the cloud!
                 syncToCloud({ tasks: completedTasks, quizzes: history });
             };
 
@@ -242,7 +262,12 @@
                                 {quizSubmitted && (
                                     <div className={`p-6 rounded-xl border-2 text-center relative overflow-hidden ${score >= totalQ * 0.7 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
                                         <div className="text-4xl font-black mb-1">{score} / {totalQ}</div>
-                                        <div className="font-semibold">{score >= totalQ * 0.7 ? 'Great job! You\'re on track.' : 'Review the concepts and try again.'}</div>
+                                        <div className="font-semibold mb-4">{score >= totalQ * 0.7 ? 'Great job! You\'re on track.' : 'Review the concepts and try again.'}</div>
+                                        
+                                        {/* NEW RETAKE BUTTON */}
+                                        <button onClick={resetDailyQuiz} className="bg-white text-slate-800 ring-1 ring-slate-200 px-6 py-2.5 rounded-lg font-bold shadow-sm hover:bg-slate-50 transition-colors">
+                                            Retake Quiz
+                                        </button>
                                     </div>
                                 )}
 
