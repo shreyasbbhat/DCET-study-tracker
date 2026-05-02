@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCET Master Formula Sheet</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+    <div id="root"></div>
+ 
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+ 
+        const ALL_SUBJECTS = ["All", "Math", "FEEE", "Stats", "PMS", "IT Skills"];
+ 
+        const FORMULA_DATA = [
+            // ─── MATH ───────────────────────────────────────────────────
+            {
+                subject: "Math U1: Matrices",
+                tag: "Math",
+                color: "bg-orange-500",
+                formulas: [
+                    { name: "Determinant (2×2)", math: "Det(A) = (a × d) - (b × c)" },
+                    { name: "Inverse Formula", math: "A⁻¹ = adj(A) / |A|" },
+                    { name: "Eigenvalues — Sum", math: "Sum(λ) = Trace  (sum of main diagonal)" },
+                    { name: "Eigenvalues — Product", math: "Product(λ) = Determinant |A|" },
+                    { name: "Char. Equation", math: "|A − λI| = 0" },
+                    { name: "Multiplication Rule", math: "Cols of A MUST equal Rows of B" },
+                    { name: "Adjoint (2×2) Trick", math: "Swap diagonal, negate off-diagonal" }
+                ]
+            },
+            {
+                subject: "Math U2: Straight Lines",
+                tag: "Math",
+                color: "bg-red-500",
+                formulas: [
+                    { name: "Slope (m)", math: "m = (y₂ − y₁) / (x₂ − x₁)" },
+                    { name: "Slope-Intercept Form", math: "y = mx + c" },
+                    { name: "Point-Slope Form", math: "y − y₁ = m(x − x₁)" },
+                    { name: "Intercept Form", math: "x/a + y/b = 1" },
+                    { name: "General Form", math: "ax + by + c = 0  →  slope = −a/b" },
+                    { name: "Parallel / Perpendicular", math: "Parallel: m₁ = m₂  |  Perp: m₁ × m₂ = −1" },
+                    { name: "Angle Between Lines", math: "tan θ = |(m₁ − m₂) / (1 + m₁m₂)|" }
+                ]
+            },
+            {
+                subject: "Math U3: Trigonometry",
+                tag: "Math",
+                color: "bg-pink-500",
+                formulas: [
+                    { name: "Pythagorean Master", math: "sin²θ + cos²θ = 1" },
+                    { name: "ASTC Quadrant Rule", math: "Q1: All+  Q2: Sin+  Q3: Tan+  Q4: Cos+" },
+                    { name: "Allied Angles (90−θ)", math: "sin(90−θ) = cosθ  |  cos(90−θ) = sinθ" },
+                    { name: "Allied Angles (180−θ)", math: "sin(180−θ) = sinθ  |  cos(180−θ) = −cosθ" },
+                    { name: "Compound sin(A±B)", math: "sinA cosB ± cosA sinB" },
+                    { name: "Compound cos(A±B)", math: "cosA cosB ∓ sinA sinB" },
+                    { name: "Double Angle Sin", math: "sin(2A) = 2 sinA cosA" },
+                    { name: "Double Angle Cos", math: "cos(2A) = cos²A − sin²A = 2cos²A−1 = 1−2sin²A" },
+                    { name: "Product → Sum", math: "2sinA cosB = sin(A+B) + sin(A−B)" },
+                    { name: "Sum → Product", math: "sinC + sinD = 2sin((C+D)/2)cos((C−D)/2)" }
+                ]
+            },
+            {
+                subject: "Math U4: Diff Calculus",
+                tag: "Math",
+                color: "bg-indigo-500",
+                formulas: [
+                    { name: "Power Rule", math: "d/dx [xⁿ] = n·xⁿ⁻¹" },
+                    { name: "Constant Rule", math: "d/dx [k] = 0" },
+                    { name: "Exponential / Log", math: "d/dx [eˣ] = eˣ  |  d/dx [ln x] = 1/x" },
+                    { name: "Trig Derivatives", math: "d/dx [sin x] = cos x  |  d/dx [cos x] = −sin x" },
+                    { name: "tan / sec Derivatives", math: "d/dx [tan x] = sec²x  |  d/dx [sec x] = sec x tan x" },
+                    { name: "Product Rule", math: "d/dx [uv] = u·v′ + v·u′" },
+                    { name: "Quotient Rule", math: "d/dx [u/v] = (v·u′ − u·v′) / v²" },
+                    { name: "Chain Rule", math: "dy/dx = f′(g(x)) × g′(x)" }
+                ]
+            },
+            {
+                subject: "Math U5: Integral Calculus",
+                tag: "Math",
+                color: "bg-blue-500",
+                formulas: [
+                    { name: "Power Rule", math: "∫ xⁿ dx = xⁿ⁺¹/(n+1) + C  (n ≠ −1)" },
+                    { name: "1/x & Exponential", math: "∫ (1/x) dx = ln|x| + C  |  ∫ eˣ dx = eˣ + C" },
+                    { name: "Trig Integrals", math: "∫ sin x dx = −cos x + C  |  ∫ cos x dx = sin x + C" },
+                    { name: "sec² Integral", math: "∫ sec²x dx = tan x + C" },
+                    { name: "Definite Integral", math: "∫ₐᵇ f(x) dx = F(b) − F(a)" },
+                    { name: "Constant Multiple", math: "∫ k·f(x) dx = k · ∫ f(x) dx" }
+                ]
+            },
+ 
+            // ─── FEEE ────────────────────────────────────────────────────
+            {
+                subject: "FEEE U1: Safety & Earthing",
+                tag: "FEEE",
+                color: "bg-amber-600",
+                formulas: [
+                    { name: "Purpose of Earthing", math: "Provides safe low-resistance path → protects from shock" },
+                    { name: "Types of Earthing", math: "Plate Earthing  |  Pipe Earthing  |  Strip Earthing" },
+                    { name: "Earth Wire Colour", math: "Green OR Green+Yellow stripe" },
+                    { name: "Reduce Earth Resistance", math: "Add salt + charcoal → retains moisture → ↑ conductivity" },
+                    { name: "Fire on Electrical", math: "Use Class C (CO₂ / Dry Chemical) — NEVER water!" },
+                    { name: "First Aid — Electrocution", math: "1. Turn OFF power  2. Don't touch bare-handed  3. CPR" },
+                    { name: "Indian AC Supply", math: "230V AC, 50 Hz" }
+                ]
+            },
+            {
+                subject: "FEEE U2: Circuits & Measuring",
+                tag: "FEEE",
+                color: "bg-amber-500",
+                formulas: [
+                    { name: "Ohm's Law", math: "V = I × R" },
+                    { name: "Power Formulas", math: "P = V × I = I²R = V²/R" },
+                    { name: "Series Resistance", math: "R_total = R₁ + R₂ + R₃  (current same)" },
+                    { name: "Parallel Resistance", math: "1/R_total = 1/R₁ + 1/R₂  (voltage same)" },
+                    { name: "KCL (Kirchhoff)", math: "Sum of currents IN = Sum of currents OUT at junction" },
+                    { name: "KVL (Kirchhoff)", math: "Sum of all voltages in a closed loop = 0" },
+                    { name: "Ammeter Connection", math: "SERIES — low internal resistance (≈ 0)" },
+                    { name: "Voltmeter Connection", math: "PARALLEL — high internal resistance (≈ ∞)" },
+                    { name: "Rectifier vs Inverter", math: "Rectifier: AC→DC  |  Inverter: DC→AC" },
+                    { name: "Energy Meter Unit", math: "1 Unit = 1 kWh (kilowatt-hour)" }
+                ]
+            },
+            {
+                subject: "FEEE U3: Wiring & Protection",
+                tag: "FEEE",
+                color: "bg-yellow-600",
+                formulas: [
+                    { name: "MCB Function", math: "Protects against Overload (thermal) + Short Circuit (magnetic)" },
+                    { name: "ELCB / RCCB", math: "Detects earth leakage current → trips to prevent shock" },
+                    { name: "Fuse / Switch Location", math: "ALWAYS on the Live (Phase) wire — NEVER Neutral" },
+                    { name: "Relay", math: "Electromechanical switch — small current controls large current" },
+                    { name: "Wiring Types", math: "Concealed Conduit = safest  |  Cleat = cheapest" },
+                    { name: "2-Way Switch Use", math: "Control ONE light from TWO locations (e.g. staircase)" },
+                    { name: "Short Circuit Cause", math: "Live touches Neutral → near-zero resistance → current spike" },
+                    { name: "Earth Pin (3-pin plug)", math: "Longest + thickest pin — connects first" }
+                ]
+            },
+            {
+                subject: "FEEE U4: Transformers & Machines",
+                tag: "FEEE",
+                color: "bg-orange-600",
+                formulas: [
+                    { name: "Transformer Ratio (K)", math: "K = V₂/V₁ = N₂/N₁ = I₁/I₂" },
+                    { name: "Step-Up / Step-Down", math: "K > 1 → Step-Up  |  K < 1 → Step-Down" },
+                    { name: "Synchronous Speed", math: "Ns = (120 × f) / P  (f = freq, P = no. of poles)" },
+                    { name: "Motor Types", math: "DC: Series / Shunt / Compound  |  AC: Induction / Sync" },
+                    { name: "Induction Motor", math: "Most common — runs slightly below synchronous speed (slip)" },
+                    { name: "Battery (EMF)", math: "E = V + I·r  (V = terminal voltage, r = internal resistance)" }
+                ]
+            },
+            {
+                subject: "FEEE U5: Boolean Algebra",
+                tag: "FEEE",
+                color: "bg-purple-500",
+                formulas: [
+                    { name: "De Morgan's Laws", math: "¬(A·B) = Ā+B̄  |  ¬(A+B) = Ā·B̄" },
+                    { name: "Idempotent / Identity", math: "A+A = A  |  A·A = A  |  A+0 = A  |  A·1 = A" },
+                    { name: "One Dominance / Complement", math: "A+1 = 1  |  A·0 = 0  |  A+Ā = 1  |  A·Ā = 0" },
+                    { name: "Double Negation", math: "¬(¬A) = A" },
+                    { name: "Gates Truth Summary", math: "AND: both 1→1  |  OR: either 1→1  |  NOT: flip" },
+                    { name: "XOR Gate", math: "A⊕B = 1 only when inputs are DIFFERENT" }
+                ]
+            },
+ 
+            // ─── STATS ───────────────────────────────────────────────────
+            {
+                subject: "Stats U1–U2: Data & Graphs",
+                tag: "Stats",
+                color: "bg-cyan-600",
+                formulas: [
+                    { name: "Primary vs Secondary Data", math: "Primary = collected firsthand  |  Secondary = existing source" },
+                    { name: "Quantitative vs Qualitative", math: "Quantitative = numbers  |  Qualitative = categories/attributes" },
+                    { name: "Discrete vs Continuous", math: "Discrete = countable whole (students)  |  Continuous = any value (height)" },
+                    { name: "Frequency", math: "Number of times a value appears in the dataset" },
+                    { name: "Cumulative Frequency", math: "Running total of frequencies from top downwards" },
+                    { name: "Histogram", math: "Continuous data — bars TOUCH (no gaps between them)" },
+                    { name: "Bar Chart", math: "Discrete/Categorical data — bars have GAPS" },
+                    { name: "Ogive (Cumulative Curve)", math: "Plot cumulative frequency — intersection gives MEDIAN" },
+                    { name: "Pie Chart Angle", math: "Angle = (Value / Total) × 360°" }
+                ]
+            },
+            {
+                subject: "Stats U3: Measures of Dispersion",
+                tag: "Stats",
+                color: "bg-teal-600",
+                formulas: [
+                    { name: "Range", math: "Range = Maximum value − Minimum value" },
+                    { name: "Mean Deviation (MD)", math: "MD = Σ|x − x̄| / n" },
+                    { name: "Variance (σ²)", math: "σ² = Σ(x − x̄)² / n" },
+                    { name: "Standard Deviation (σ)", math: "σ = √[Σ(x − x̄)² / n]  =  √Variance" },
+                    { name: "Coefficient of Variation", math: "CV = (σ / x̄) × 100%  (lower = more consistent)" },
+                    { name: "Empirical Relation", math: "Mode = 3 × Median − 2 × Mean" }
+                ]
+            },
+            {
+                subject: "Stats U4: Grouped Data",
+                tag: "Stats",
+                color: "bg-emerald-500",
+                formulas: [
+                    { name: "Class Midpoint (x)", math: "x = (Lower Boundary + Upper Boundary) / 2" },
+                    { name: "Grouped Mean (AM)", math: "AM = Σ(fᵢ × xᵢ) / Σfᵢ" },
+                    { name: "Grouped Median Class", math: "Find class where cumulative freq ≥ N/2" },
+                    { name: "Grouped Mode Class", math: "Class with the HIGHEST frequency" }
+                ]
+            },
+ 
+            // ─── PMS ─────────────────────────────────────────────────────
+            {
+                subject: "PMS U1–U2: Concepts & Teams",
+                tag: "PMS",
+                color: "bg-violet-500",
+                formulas: [
+                    { name: "Project Definition", math: "Temporary + Unique → has a definite start & end date" },
+                    { name: "Triple Constraint", math: "Time ↔ Cost ↔ Scope  (change one → affects the others)" },
+                    { name: "Project Life Cycle", math: "Initiation → Planning → Execution → Monitoring → Closure" },
+                    { name: "Scope Creep", math: "Uncontrolled growth of scope without adjusting time/cost" },
+                    { name: "Tuckman's Stages", math: "Forming → Storming → Norming → Performing → Adjourning" },
+                    { name: "RACI Matrix", math: "R=Responsible  A=Accountable  C=Consulted  I=Informed" },
+                    { name: "WBS", math: "Work Breakdown Structure — breaks scope into work packages" },
+                    { name: "Stakeholder", math: "Anyone who affects OR is affected by the project" }
+                ]
+            },
+            {
+                subject: "PMS U3–U5: Scheduling & Control",
+                tag: "PMS",
+                color: "bg-fuchsia-500",
+                formulas: [
+                    { name: "PERT Expected Time (tₑ)", math: "tₑ = (O + 4M + P) / 6  (O=optimistic, M=most likely, P=pessimistic)" },
+                    { name: "PERT Std Deviation", math: "σ = (P − O) / 6" },
+                    { name: "Critical Path (CPM)", math: "Longest path through the network = project duration" },
+                    { name: "Float / Slack", math: "Float = LFT − EFT  (zero float = critical activity)" },
+                    { name: "Gantt Chart", math: "Bar chart of tasks vs. time — shows schedule visually" },
+                    { name: "Earned Value (EV)", math: "EV = % complete × Budget At Completion (BAC)" },
+                    { name: "Cost Variance (CV)", math: "CV = EV − AC  (positive = under budget ✅)" },
+                    { name: "Schedule Variance (SV)", math: "SV = EV − PV  (positive = ahead of schedule ✅)" },
+                    { name: "CPI (Cost Index)", math: "CPI = EV / AC  (> 1 = under budget)" },
+                    { name: "SPI (Schedule Index)", math: "SPI = EV / PV  (> 1 = ahead of schedule)" }
+                ]
+            },
+ 
+            // ─── IT SKILLS ───────────────────────────────────────────────
+            {
+                subject: "IT U1: Flowcharts & Algorithms",
+                tag: "IT Skills",
+                color: "bg-sky-500",
+                formulas: [
+                    { name: "Algorithm", math: "Step-by-step procedure to solve a problem (in plain text)" },
+                    { name: "Flowchart Oval", math: "START / STOP (Terminal)" },
+                    { name: "Flowchart Rectangle", math: "PROCESS / CALCULATION step" },
+                    { name: "Flowchart Parallelogram", math: "INPUT / OUTPUT operation" },
+                    { name: "Flowchart Diamond", math: "DECISION (Yes/No condition — IF/ELSE)" },
+                    { name: "Flowchart Arrow", math: "FLOW of control between steps" },
+                    { name: "Compiler vs Interpreter", math: "Compiler = translates whole program  |  Interpreter = line-by-line" },
+                    { name: "IDE", math: "Integrated Development Environment — write, test, debug code" },
+                    { name: "Bug", math: "An error/flaw in code causing wrong or unexpected output" }
+                ]
+            },
+            {
+                subject: "IT U2: HTML & JavaScript",
+                tag: "IT Skills",
+                color: "bg-blue-400",
+                formulas: [
+                    { name: "HTML = ?", math: "HyperText Markup Language — structure of web pages" },
+                    { name: "CSS = ?", math: "Cascading Style Sheets — controls visual styling/layout" },
+                    { name: "Key HTML Tags", math: "<h1>...<h6> Headings  |  <a> Link  |  <img src> Image" },
+                    { name: "Lists", math: "<ul> Unordered (bullets)  |  <ol> Ordered (numbers)  |  <li> item" },
+                    { name: "JavaScript — Vars", math: "let (block scope)  |  const (constant)  |  var (old, avoid)" },
+                    { name: "JS Array", math: "let arr = [\"red\", \"green\", \"blue\"]  (square brackets)" },
+                    { name: "JS Output", math: "console.log(x)  →  prints to browser console" },
+                    { name: "<script> tag", math: "Embeds JavaScript inside HTML page" }
+                ]
+            },
+            {
+                subject: "IT U3: BPA & ERP",
+                tag: "IT Skills",
+                color: "bg-indigo-400",
+                formulas: [
+                    { name: "BPA = ?", math: "Business Process Automation — tech executes repetitive tasks" },
+                    { name: "BPA Benefit", math: "Reduces cost, eliminates human error, saves time" },
+                    { name: "ERP = ?", math: "Enterprise Resource Planning — integrates ALL business processes" },
+                    { name: "ERP Core Feature", math: "ONE centralized database shared by ALL departments" },
+                    { name: "ERP Modules", math: "HR / Finance / Sales / Supply Chain / Manufacturing" },
+                    { name: "CRM", math: "Customer Relationship Management — manages customer interactions" },
+                    { name: "Popular ERP", math: "SAP  |  Oracle  |  Microsoft Dynamics" },
+                    { name: "ERP Challenge", math: "High cost + complex implementation — takes months/years" }
+                ]
+            },
+            {
+                subject: "IT U4: Cloud, IoT & AI",
+                tag: "IT Skills",
+                color: "bg-violet-400",
+                formulas: [
+                    { name: "Cloud Computing", math: "Delivery of IT services over the internet (no local hardware)" },
+                    { name: "Cloud Types", math: "Public (AWS, Azure)  |  Private  |  Hybrid" },
+                    { name: "IaaS / PaaS / SaaS", math: "Infrastructure / Platform / Software — as a Service" },
+                    { name: "IoT = ?", math: "Internet of Things — everyday devices connected to internet" },
+                    { name: "IoT Examples", math: "Smart AC, smart meters, wearables, industrial sensors" },
+                    { name: "AI vs ML", math: "AI = broader concept  |  ML = AI that learns from data" },
+                    { name: "Big Data 3 V's", math: "Volume + Velocity + Variety" }
+                ]
+            },
+            {
+                subject: "IT U5: Cyber Security",
+                tag: "IT Skills",
+                color: "bg-slate-500",
+                formulas: [
+                    { name: "CIA Triad", math: "Confidentiality + Integrity + Availability" },
+                    { name: "Malware Types", math: "Virus / Worm / Trojan / Ransomware / Spyware" },
+                    { name: "Phishing", math: "Fake email/site tricking user to reveal passwords/data" },
+                    { name: "Firewall", math: "Network security system that filters incoming/outgoing traffic" },
+                    { name: "Encryption", math: "Converts data to unreadable form — only key can decode" },
+                    { name: "2FA", math: "Two-Factor Authentication — password + OTP/biometric" },
+                    { name: "VPN", math: "Virtual Private Network — creates encrypted tunnel over internet" },
+                    { name: "Ethical Hacking", math: "Authorized testing of a system to find vulnerabilities" }
+                ]
+            }
+        ];
+ 
+        const TAG_COLORS = {
+            "Math":     "bg-orange-100 text-orange-700 border-orange-200",
+            "FEEE":     "bg-amber-100 text-amber-700 border-amber-200",
+            "Stats":    "bg-teal-100 text-teal-700 border-teal-200",
+            "PMS":      "bg-violet-100 text-violet-700 border-violet-200",
+            "IT Skills":"bg-sky-100 text-sky-700 border-sky-200",
+        };
+ 
+        function FormulasApp() {
+            const [activeFilter, setActiveFilter] = useState("All");
+            const [search, setSearch] = useState("");
+ 
+            useEffect(() => {
+                if (!localStorage.getItem('dcet_user')) {
+                    window.location.href = 'login.html';
+                }
+            }, []);
+ 
+            const filtered = FORMULA_DATA.filter(section => {
+                const matchTag = activeFilter === "All" || section.tag === activeFilter;
+                const q = search.toLowerCase();
+                const matchSearch = !q
+                    || section.subject.toLowerCase().includes(q)
+                    || section.formulas.some(f =>
+                        f.name.toLowerCase().includes(q) || f.math.toLowerCase().includes(q)
+                    );
+                return matchTag && matchSearch;
+            });
+ 
+            return (
+                <div className="min-h-screen pb-24 bg-slate-50">
+                    {/* Header */}
+                    <header className="bg-slate-900 text-white sticky top-0 z-20 shadow-lg">
+                        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+                            <h1 className="text-xl font-extrabold flex items-center gap-2 shrink-0">
+                                ✨ Master Cheat Sheet
+                            </h1>
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Search formulas..."
+                                className="flex-1 max-w-xs bg-slate-800 text-white placeholder-slate-400 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <a href="index.html" className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition-colors shrink-0">
+                                ← Tracker
+                            </a>
+                        </div>
+                        {/* Filter tabs */}
+                        <div className="flex overflow-x-auto border-t border-slate-800 bg-slate-950/60" style={{scrollbarWidth:'none'}}>
+                            {ALL_SUBJECTS.map(s => (
+                                <button key={s} onClick={() => setActiveFilter(s)}
+                                    className={`px-4 py-2.5 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
+                                        activeFilter === s
+                                            ? 'border-emerald-400 text-emerald-300'
+                                            : 'border-transparent text-slate-400 hover:text-white'
+                                    }`}>
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </header>
+ 
+                    {/* Stats bar */}
+                    <div className="max-w-6xl mx-auto px-4 pt-5 pb-2 flex items-center gap-3 text-xs text-slate-500 font-medium">
+                        <span>Showing <strong className="text-slate-700">{filtered.length}</strong> of {FORMULA_DATA.length} cards</span>
+                        <span>·</span>
+                        <span><strong className="text-slate-700">{filtered.reduce((a, s) => a + s.formulas.length, 0)}</strong> formulas</span>
+                    </div>
+ 
+                    <main className="max-w-6xl mx-auto px-4 py-3">
+                        {filtered.length === 0 ? (
+                            <div className="text-center py-20 text-slate-400">
+                                <div className="text-4xl mb-3">🔍</div>
+                                <p className="font-semibold">No results for "{search}"</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                {filtered.map((section, idx) => (
+                                    <div key={idx} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                                        {/* Card header */}
+                                        <div className={`${section.color} px-5 py-3 text-white flex items-center justify-between`}>
+                                            <span className="font-extrabold text-base leading-tight">{section.subject}</span>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 border border-white/30 ml-2 shrink-0`}>
+                                                {section.tag}
+                                            </span>
+                                        </div>
+                                        {/* Formulas */}
+                                        <div className="p-4 flex-1 space-y-3">
+                                            {section.formulas.map((f, i) => (
+                                                <div key={i} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                                        {f.name}
+                                                    </div>
+                                                    <div className="font-mono text-slate-800 font-semibold text-[13px] bg-slate-50 px-2.5 py-1.5 rounded border border-slate-100 leading-snug">
+                                                        {f.math}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </main>
+ 
+                    {/* Footer count */}
+                    <div className="fixed bottom-0 w-full text-center py-2.5 bg-slate-100/90 backdrop-blur text-[10px] text-slate-400 border-t border-slate-200 z-10 font-bold uppercase tracking-tighter">
+                        DCET 2026 — {FORMULA_DATA.length} Subject Cards · {FORMULA_DATA.reduce((a, s) => a + s.formulas.length, 0)} Total Formulas
+                    </div>
+                </div>
+            );
+        }
+ 
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FormulasApp />);
+    </script>
+</body>
+</html>
