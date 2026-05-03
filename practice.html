@@ -920,7 +920,7 @@ const SUBJECT_DATA = {            // ================= MATHEMATICS =============
         function App() {
             const userEmail = localStorage.getItem('dcet_user');
 
-            // --- 2. DOWNLOAD PROGRESS FROM CLOUD ---
+          // --- 2. DOWNLOAD PROGRESS FROM CLOUD & RESTORE CACHE ---
             useEffect(() => {
                 if (!userEmail) {
                     window.location.href = 'login.html';
@@ -933,18 +933,23 @@ const SUBJECT_DATA = {            // ================= MATHEMATICS =============
                             .from('test_users')
                             .select('progress')
                             .eq('email', userEmail)
-                            .single();
+                            .maybeSingle(); // Prevents errors if row doesn't exist yet
 
                         if (data && data.progress && data.progress.practice_v2) {
-                            setProgress(data.progress.practice_v2);
+                            const cloudProgress = data.progress.practice_v2;
+                            // 1. Update the screen
+                            setProgress(cloudProgress);
+                            // 2. Instantly rebuild the local cache so it survives!
+                            localStorage.setItem('dcet_practice_progress_v2', JSON.stringify(cloudProgress));
+                            console.log("☁️ Data downloaded and cache restored!");
                         }
                     } catch (err) { console.error("Download failed:", err); }
                 }
                 fetchCloudData();
             }, []);
 
-           
-            // --- 3. UPLOAD PROGRESS TO CLOUD (Ghost Catcher Version) ---
+            
+            // --- 3. UPLOAD PROGRESS TO CLOUD (Bulletproof Upsert Version) ---
             async function syncToCloud(latestPracticeData) {
                 if (!userEmail) return;
                 try {
@@ -953,27 +958,27 @@ const SUBJECT_DATA = {            // ================= MATHEMATICS =============
                         .from('test_users')
                         .select('progress')
                         .eq('email', userEmail)
-                        .single();
+                        .maybeSingle();
 
                     const fullProgress = {
                         ...(existing?.progress || {}),
                         practice_v2: latestPracticeData
                     };
 
-                    // 2. Push the combined data back
+                    // 2. Push the combined data back using UPSERT
+                    // (Upsert = "Update it if the email exists, Insert a brand new row if it doesn't")
                     const { data, error } = await supabase
                         .from('test_users')
-                        .update({ progress: fullProgress })
-                        .eq('email', userEmail)
-                        .select(); // <--- This is the key to catching ghosts!
+                        .upsert({ 
+                            email: userEmail, 
+                            progress: fullProgress 
+                        }, { onConflict: 'email' })
+                        .select();
 
                     if (error) {
                         alert("SUPABASE ERROR: " + error.message);
-                    } else if (!data || data.length === 0) {
-                        // THE GHOST CAUGHT!
-                        alert(`GHOST BUG: I am trying to save to "${userEmail}" but that email doesn't exist in your Supabase table!`);
                     } else {
-                        console.log("☁️ Practice progress synced!");
+                        console.log("☁️ Practice progress synced securely to the cloud!");
                     }
                 } catch (err) { 
                     console.error("Upload failed:", err); 
